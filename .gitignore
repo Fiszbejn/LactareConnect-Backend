@@ -4,3 +4,4 @@ dist/
 *.log
 coverage/
 .nest/
+CLAUDE.md
