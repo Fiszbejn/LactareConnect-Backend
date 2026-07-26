@@ -38,6 +38,7 @@ import { RelatorioGeradoModule } from './modules/relatorio-gerado/relatorio-gera
         sid: config.get<string>('database.sid'),
         username: config.get<string>('database.username'),
         password: config.get<string>('database.password'),
+        entityPrefix: config.get<string>('database.entityPrefix'),
         synchronize: config.get<boolean>('database.synchronize'),
         logging: config.get<boolean>('database.logging'),
         autoLoadEntities: true,
