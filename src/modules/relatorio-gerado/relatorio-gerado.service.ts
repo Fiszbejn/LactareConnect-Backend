@@ -18,6 +18,8 @@ export class RelatorioGeradoService {
     const { administradorId, ...dados } = createRelatorioDto;
     const relatorio = this.relatorioRepository.create({
       ...dados,
+      periodoInicio: new Date(dados.periodoInicio),
+      periodoFim: new Date(dados.periodoFim),
       administrador: { id: administradorId } as Administrador,
     });
     return this.relatorioRepository.save(relatorio);

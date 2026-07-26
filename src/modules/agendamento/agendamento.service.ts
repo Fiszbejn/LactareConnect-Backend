@@ -18,6 +18,7 @@ export class AgendamentoService {
     const { nutrizId, bancoId, ...dados } = createAgendamentoDto;
     const agendamento = this.agendamentoRepository.create({
       ...dados,
+      dataColeta: new Date(dados.dataColeta),
       nutriz: { id: nutrizId } as Nutriz,
       banco: { id: bancoId } as BancoLeiteLactare,
     });
@@ -48,6 +49,9 @@ export class AgendamentoService {
     const agendamento = await this.findOne(id);
     const { nutrizId, bancoId, ...dados } = updateAgendamentoDto;
     Object.assign(agendamento, dados);
+    if (dados.dataColeta) {
+      agendamento.dataColeta = new Date(dados.dataColeta);
+    }
     if (nutrizId) {
       agendamento.nutriz = { id: nutrizId } as Nutriz;
     }
