@@ -20,9 +20,14 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('LactareConnect API')
     .setDescription(
-      'API do LactareConnect — plataforma de doação de leite materno humano. Conecta nutrizes doadoras a bancos de leite, com sistema de recompensas (Gotinhas) e chatbot de suporte.',
+      'API do LactareConnect — plataforma de doação de leite materno humano. Conecta nutrizes doadoras a bancos de leite, com sistema de recompensas (Gotinhas) e chatbot de suporte.\n\n' +
+        'Autenticação: faça login em POST /auth/login (como nutriz ou administrador), copie o "accessToken" da resposta e clique em "Authorize" para usá-lo nas demais rotas.',
     )
     .setVersion('1.0')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'access-token',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);

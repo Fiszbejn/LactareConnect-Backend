@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import {
 } from '../exame-pre-doacao/entities/exame-pre-doacao.entity';
 import { CreateAgendamentoDto } from './dto/create-agendamento.dto';
 import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
+import { AuthUser } from '../auth/types/auth-user.type';
 
 const EXAMES_OBRIGATORIOS = [
   ExameTipo.HEMOGRAMA,
@@ -34,8 +36,15 @@ export class AgendamentoService {
 
   async create(
     createAgendamentoDto: CreateAgendamentoDto,
+    user: AuthUser,
   ): Promise<Agendamento> {
     const { nutrizId, bancoId, ...dados } = createAgendamentoDto;
+
+    if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+      throw new ForbiddenException(
+        'Você só pode agendar uma coleta para você mesma.',
+      );
+    }
 
     const nutriz = await this.dataSource
       .getRepository(Nutriz)
@@ -72,13 +81,15 @@ export class AgendamentoService {
     return this.agendamentoRepository.save(agendamento);
   }
 
-  findAll(): Promise<Agendamento[]> {
+  findAll(user: AuthUser): Promise<Agendamento[]> {
+    const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
     return this.agendamentoRepository.find({
+      where,
       relations: { nutriz: true, banco: true },
     });
   }
 
-  async findOne(id: number): Promise<Agendamento> {
+  async findOne(id: number, user: AuthUser): Promise<Agendamento> {
     const agendamento = await this.agendamentoRepository.findOne({
       where: { id },
       relations: { nutriz: true, banco: true, doacao: true },
@@ -86,20 +97,31 @@ export class AgendamentoService {
     if (!agendamento) {
       throw new NotFoundException(`Agendamento #${id} não encontrado`);
     }
+    if (user.tipo === 'nutriz' && user.id !== agendamento.nutriz.id) {
+      throw new ForbiddenException(
+        'Você não tem permissão para acessar este agendamento.',
+      );
+    }
     return agendamento;
   }
 
   async update(
     id: number,
     updateAgendamentoDto: UpdateAgendamentoDto,
+    user: AuthUser,
   ): Promise<Agendamento> {
-    const agendamento = await this.findOne(id);
+    const agendamento = await this.findOne(id, user);
     const { nutrizId, bancoId, ...dados } = updateAgendamentoDto;
     Object.assign(agendamento, dados);
     if (dados.dataColeta) {
       agendamento.dataColeta = new Date(dados.dataColeta);
     }
     if (nutrizId) {
+      if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+        throw new ForbiddenException(
+          'Você não pode transferir este agendamento para outra nutriz.',
+        );
+      }
       const nutriz = await this.dataSource
         .getRepository(Nutriz)
         .findOneBy({ id: nutrizId });

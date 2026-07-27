@@ -8,16 +8,19 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BancoLeiteService } from './banco-leite.service';
 import { CreateBancoLeiteDto } from './dto/create-banco-leite.dto';
 import { UpdateBancoLeiteDto } from './dto/update-banco-leite.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Bancos de Leite')
+@ApiBearerAuth('access-token')
 @Controller('bancos-leite')
 export class BancoLeiteController {
   constructor(private readonly bancoLeiteService: BancoLeiteService) {}
 
+  @Roles('administrador')
   @ApiOperation({ summary: 'Cadastrar um banco de leite' })
   @Post()
   create(@Body() createBancoLeiteDto: CreateBancoLeiteDto) {
@@ -36,6 +39,7 @@ export class BancoLeiteController {
     return this.bancoLeiteService.findOne(id);
   }
 
+  @Roles('administrador')
   @ApiOperation({ summary: 'Atualizar um banco de leite' })
   @Patch(':id')
   update(
@@ -45,6 +49,7 @@ export class BancoLeiteController {
     return this.bancoLeiteService.update(id, updateBancoLeiteDto);
   }
 
+  @Roles('administrador')
   @ApiOperation({ summary: 'Remover um banco de leite' })
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {

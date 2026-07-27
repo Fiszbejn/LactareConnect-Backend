@@ -6,11 +6,14 @@ import {
   ParseIntPipe,
   Post,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ConversaService } from './conversa.service';
 import { CreateConversaDto } from './dto/create-conversa.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Conversas')
+@Roles('administrador')
+@ApiBearerAuth('access-token')
 @Controller('conversas')
 export class ConversaController {
   constructor(private readonly conversaService: ConversaService) {}

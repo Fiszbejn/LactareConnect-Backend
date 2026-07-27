@@ -8,12 +8,15 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CampanhaService } from './campanha.service';
 import { CreateCampanhaDto } from './dto/create-campanha.dto';
 import { UpdateCampanhaDto } from './dto/update-campanha.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Campanhas')
+@Roles('administrador')
+@ApiBearerAuth('access-token')
 @Controller('campanhas')
 export class CampanhaController {
   constructor(private readonly campanhaService: CampanhaService) {}

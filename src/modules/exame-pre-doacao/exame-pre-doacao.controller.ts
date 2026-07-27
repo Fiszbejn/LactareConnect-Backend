@@ -7,32 +7,44 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExamePreDoacaoService } from './exame-pre-doacao.service';
 import { CreateExamePreDoacaoDto } from './dto/create-exame-pre-doacao.dto';
 import { UpdateExamePreDoacaoDto } from './dto/update-exame-pre-doacao.dto';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { AuthUser } from '../auth/types/auth-user.type';
 
 @ApiTags('Exames Pré-Doação')
+@ApiBearerAuth('access-token')
 @Controller('exames-pre-doacao')
 export class ExamePreDoacaoController {
   constructor(private readonly examePreDoacaoService: ExamePreDoacaoService) {}
 
   @ApiOperation({ summary: 'Registrar um exame pré-doação de uma nutriz' })
   @Post()
-  create(@Body() createExamePreDoacaoDto: CreateExamePreDoacaoDto) {
-    return this.examePreDoacaoService.create(createExamePreDoacaoDto);
+  create(
+    @Body() createExamePreDoacaoDto: CreateExamePreDoacaoDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.examePreDoacaoService.create(createExamePreDoacaoDto, user);
   }
 
-  @ApiOperation({ summary: 'Listar todos os exames pré-doação' })
+  @ApiOperation({
+    summary:
+      'Listar exames pré-doação (nutriz vê só os próprios; administrador vê todos)',
+  })
   @Get()
-  findAll() {
-    return this.examePreDoacaoService.findAll();
+  findAll(@CurrentUser() user: AuthUser) {
+    return this.examePreDoacaoService.findAll(user);
   }
 
   @ApiOperation({ summary: 'Buscar um exame pré-doação pelo id' })
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.examePreDoacaoService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.examePreDoacaoService.findOne(id, user);
   }
 
   @ApiOperation({
@@ -43,7 +55,8 @@ export class ExamePreDoacaoController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateExamePreDoacaoDto: UpdateExamePreDoacaoDto,
+    @CurrentUser() user: AuthUser,
   ) {
-    return this.examePreDoacaoService.update(id, updateExamePreDoacaoDto);
+    return this.examePreDoacaoService.update(id, updateExamePreDoacaoDto, user);
   }
 }

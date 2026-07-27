@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,6 +19,7 @@ import {
 } from '../transacao-gotinhas/entities/transacao-gotinhas.entity';
 import { CreateDoacaoDto } from './dto/create-doacao.dto';
 import { UpdateDoacaoDto } from './dto/update-doacao.dto';
+import { AuthUser } from '../auth/types/auth-user.type';
 
 const GOTINHAS_POR_DOACAO = 100;
 
@@ -30,8 +32,14 @@ export class DoacaoService {
     private readonly dataSource: DataSource,
   ) {}
 
-  create(createDoacaoDto: CreateDoacaoDto): Promise<Doacao> {
+  create(createDoacaoDto: CreateDoacaoDto, user: AuthUser): Promise<Doacao> {
     const { nutrizId, agendamentoId, ...dados } = createDoacaoDto;
+
+    if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+      throw new ForbiddenException(
+        'Você só pode registrar uma doação para você mesma.',
+      );
+    }
 
     return this.dataSource.transaction(async (manager) => {
       const agendamento = await manager.findOne(Agendamento, {
@@ -88,13 +96,15 @@ export class DoacaoService {
     });
   }
 
-  findAll(): Promise<Doacao[]> {
+  findAll(user: AuthUser): Promise<Doacao[]> {
+    const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
     return this.doacaoRepository.find({
+      where,
       relations: { nutriz: true, agendamento: true },
     });
   }
 
-  async findOne(id: number): Promise<Doacao> {
+  async findOne(id: number, user: AuthUser): Promise<Doacao> {
     const doacao = await this.doacaoRepository.findOne({
       where: { id },
       relations: { nutriz: true, agendamento: true },
@@ -102,15 +112,29 @@ export class DoacaoService {
     if (!doacao) {
       throw new NotFoundException(`Doação #${id} não encontrada`);
     }
+    if (user.tipo === 'nutriz' && user.id !== doacao.nutriz.id) {
+      throw new ForbiddenException(
+        'Você não tem permissão para acessar esta doação.',
+      );
+    }
     return doacao;
   }
 
-  async update(id: number, updateDoacaoDto: UpdateDoacaoDto): Promise<Doacao> {
-    const doacao = await this.findOne(id);
+  async update(
+    id: number,
+    updateDoacaoDto: UpdateDoacaoDto,
+    user: AuthUser,
+  ): Promise<Doacao> {
+    const doacao = await this.findOne(id, user);
     const { nutrizId, agendamentoId, ...dados } = updateDoacaoDto;
     Object.assign(doacao, dados);
 
     if (nutrizId) {
+      if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+        throw new ForbiddenException(
+          'Você não pode transferir esta doação para outra nutriz.',
+        );
+      }
       const nutriz = await this.dataSource
         .getRepository(Nutriz)
         .findOneBy({ id: nutrizId });

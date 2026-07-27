@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import {
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreateExamePreDoacaoDto } from './dto/create-exame-pre-doacao.dto';
 import { UpdateExamePreDoacaoDto } from './dto/update-exame-pre-doacao.dto';
+import { AuthUser } from '../auth/types/auth-user.type';
 
 @Injectable()
 export class ExamePreDoacaoService {
@@ -24,8 +26,15 @@ export class ExamePreDoacaoService {
 
   async create(
     createExameDto: CreateExamePreDoacaoDto,
+    user: AuthUser,
   ): Promise<ExamePreDoacao> {
     const { nutrizId, ...dados } = createExameDto;
+
+    if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+      throw new ForbiddenException(
+        'Você só pode registrar um exame para você mesma.',
+      );
+    }
 
     const nutriz = await this.dataSource
       .getRepository(Nutriz)
@@ -43,11 +52,12 @@ export class ExamePreDoacaoService {
     return this.exameRepository.save(exame);
   }
 
-  findAll(): Promise<ExamePreDoacao[]> {
-    return this.exameRepository.find({ relations: { nutriz: true } });
+  findAll(user: AuthUser): Promise<ExamePreDoacao[]> {
+    const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
+    return this.exameRepository.find({ where, relations: { nutriz: true } });
   }
 
-  async findOne(id: number): Promise<ExamePreDoacao> {
+  async findOne(id: number, user: AuthUser): Promise<ExamePreDoacao> {
     const exame = await this.exameRepository.findOne({
       where: { id },
       relations: { nutriz: true },
@@ -55,14 +65,20 @@ export class ExamePreDoacaoService {
     if (!exame) {
       throw new NotFoundException(`Exame pré-doação #${id} não encontrado`);
     }
+    if (user.tipo === 'nutriz' && user.id !== exame.nutriz.id) {
+      throw new ForbiddenException(
+        'Você não tem permissão para acessar este exame.',
+      );
+    }
     return exame;
   }
 
   async update(
     id: number,
     updateExameDto: UpdateExamePreDoacaoDto,
+    user: AuthUser,
   ): Promise<ExamePreDoacao> {
-    const exame = await this.findOne(id);
+    const exame = await this.findOne(id, user);
     const { nutrizId, ...dados } = updateExameDto;
     Object.assign(exame, dados);
 
@@ -73,6 +89,11 @@ export class ExamePreDoacaoService {
     }
 
     if (nutrizId) {
+      if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+        throw new ForbiddenException(
+          'Você não pode transferir este exame para outra nutriz.',
+        );
+      }
       const nutriz = await this.dataSource
         .getRepository(Nutriz)
         .findOneBy({ id: nutrizId });
