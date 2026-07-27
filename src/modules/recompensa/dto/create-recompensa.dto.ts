@@ -9,32 +9,32 @@ import {
 } from 'class-validator';
 
 export class CreateRecompensaDto {
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'O nome deve ser um texto' })
+  @IsNotEmpty({ message: 'O nome é obrigatório' })
   nome: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'O parceiro deve ser um texto' })
+  @IsNotEmpty({ message: 'O parceiro é obrigatório' })
   parceiro: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'A categoria deve ser um texto' })
+  @IsNotEmpty({ message: 'A categoria é obrigatória' })
   categoria: string;
 
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'O custo em gotinhas deve ser um número inteiro' })
+  @IsPositive({ message: 'O custo em gotinhas deve ser um número positivo' })
   custoGotinhas: number;
 
   @IsOptional()
-  @IsInt()
-  @Min(0)
+  @IsInt({ message: 'O estoque deve ser um número inteiro' })
+  @Min(0, { message: 'O estoque não pode ser negativo' })
   estoque?: number;
 
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'Ativo deve ser verdadeiro ou falso' })
   ativo?: boolean;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'A URL da imagem deve ser um texto' })
   imagemUrl?: string;
 }

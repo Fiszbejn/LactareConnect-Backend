@@ -9,18 +9,20 @@ import {
 import { MensagemRemetente } from '../entities/mensagem.entity';
 
 export class CreateMensagemDto {
-  @IsEnum(MensagemRemetente)
+  @IsEnum(MensagemRemetente, {
+    message: 'O remetente deve ser um dos valores: bot, usuario',
+  })
   remetente: MensagemRemetente;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'O texto deve ser um texto' })
+  @IsNotEmpty({ message: 'O texto é obrigatório' })
   texto: string;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'A intenção detectada deve ser um texto' })
   intencaoDetectada?: string;
 
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'O ID da conversa deve ser um número inteiro' })
+  @IsPositive({ message: 'O ID da conversa deve ser um número positivo' })
   conversaId: number;
 }

@@ -9,23 +9,25 @@ import {
 } from 'class-validator';
 
 export class CreateAdministradorDto {
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'O nome deve ser um texto' })
+  @IsNotEmpty({ message: 'O nome é obrigatório' })
   nome: string;
 
-  @IsEmail()
+  @IsEmail({}, { message: 'Informe um e-mail válido' })
   email: string;
 
-  @IsString()
-  @MinLength(6)
+  @IsString({ message: 'A senha deve ser um texto' })
+  @MinLength(6, { message: 'A senha deve ter no mínimo 6 caracteres' })
   senha: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'O papel deve ser um texto' })
+  @IsNotEmpty({ message: 'O papel é obrigatório' })
   papel: string;
 
   @IsOptional()
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'O ID do banco vinculado deve ser um número inteiro' })
+  @IsPositive({
+    message: 'O ID do banco vinculado deve ser um número positivo',
+  })
   bancoVinculadoId?: number;
 }

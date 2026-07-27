@@ -9,18 +9,20 @@ import { ResgateStatus } from '../entities/resgate.entity';
 
 export class CreateResgateDto {
   @IsOptional()
-  @IsEnum(ResgateStatus)
+  @IsEnum(ResgateStatus, {
+    message: 'O status deve ser um dos valores: pendente, enviado, concluido',
+  })
   status?: ResgateStatus;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'O endereço de entrega deve ser um texto' })
   enderecoEntrega?: string;
 
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'O ID da nutriz deve ser um número inteiro' })
+  @IsPositive({ message: 'O ID da nutriz deve ser um número positivo' })
   nutrizId: number;
 
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'O ID da recompensa deve ser um número inteiro' })
+  @IsPositive({ message: 'O ID da recompensa deve ser um número positivo' })
   recompensaId: number;
 }
