@@ -7,30 +7,36 @@ import {
   ParseIntPipe,
   Post,
 } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RelatorioGeradoService } from './relatorio-gerado.service';
 import { CreateRelatorioGeradoDto } from './dto/create-relatorio-gerado.dto';
 
+@ApiTags('Relatórios Gerados')
 @Controller('relatorios-gerados')
 export class RelatorioGeradoController {
   constructor(
     private readonly relatorioGeradoService: RelatorioGeradoService,
   ) {}
 
+  @ApiOperation({ summary: 'Gerar um relatório' })
   @Post()
   create(@Body() createRelatorioGeradoDto: CreateRelatorioGeradoDto) {
     return this.relatorioGeradoService.create(createRelatorioGeradoDto);
   }
 
+  @ApiOperation({ summary: 'Listar todos os relatórios gerados' })
   @Get()
   findAll() {
     return this.relatorioGeradoService.findAll();
   }
 
+  @ApiOperation({ summary: 'Buscar um relatório pelo id' })
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.relatorioGeradoService.findOne(id);
   }
 
+  @ApiOperation({ summary: 'Remover um relatório' })
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.relatorioGeradoService.remove(id);
