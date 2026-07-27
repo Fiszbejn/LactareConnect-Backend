@@ -42,6 +42,11 @@ export class ResgateService {
         );
       }
 
+      if (!recompensa.ativo) {
+        throw new BadRequestException(
+          'Recompensa está inativa e não pode ser resgatada.',
+        );
+      }
       if (recompensa.estoque <= 0) {
         throw new BadRequestException('Recompensa sem estoque disponível.');
       }

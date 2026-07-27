@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Endereco } from './entities/endereco.entity';
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreateEnderecoDto } from './dto/create-endereco.dto';
@@ -11,14 +15,29 @@ export class EnderecoService {
   constructor(
     @InjectRepository(Endereco)
     private readonly enderecoRepository: Repository<Endereco>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
-  create(createEnderecoDto: CreateEnderecoDto): Promise<Endereco> {
+  async create(createEnderecoDto: CreateEnderecoDto): Promise<Endereco> {
     const { nutrizId, ...dados } = createEnderecoDto;
-    const endereco = this.enderecoRepository.create({
-      ...dados,
-      nutriz: { id: nutrizId } as Nutriz,
+
+    const nutriz = await this.dataSource
+      .getRepository(Nutriz)
+      .findOneBy({ id: nutrizId });
+    if (!nutriz) {
+      throw new NotFoundException(`Nutriz #${nutrizId} não encontrada`);
+    }
+    const existente = await this.enderecoRepository.findOne({
+      where: { nutriz: { id: nutrizId } },
     });
+    if (existente) {
+      throw new ConflictException(
+        `A nutriz #${nutrizId} já possui um endereço cadastrado.`,
+      );
+    }
+
+    const endereco = this.enderecoRepository.create({ ...dados, nutriz });
     return this.enderecoRepository.save(endereco);
   }
 
@@ -44,8 +63,23 @@ export class EnderecoService {
     const endereco = await this.findOne(id);
     const { nutrizId, ...dados } = updateEnderecoDto;
     Object.assign(endereco, dados);
+
     if (nutrizId) {
-      endereco.nutriz = { id: nutrizId } as Nutriz;
+      const nutriz = await this.dataSource
+        .getRepository(Nutriz)
+        .findOneBy({ id: nutrizId });
+      if (!nutriz) {
+        throw new NotFoundException(`Nutriz #${nutrizId} não encontrada`);
+      }
+      const existente = await this.enderecoRepository.findOne({
+        where: { nutriz: { id: nutrizId } },
+      });
+      if (existente && existente.id !== id) {
+        throw new ConflictException(
+          `A nutriz #${nutrizId} já possui um endereço cadastrado.`,
+        );
+      }
+      endereco.nutriz = nutriz;
     }
     return this.enderecoRepository.save(endereco);
   }

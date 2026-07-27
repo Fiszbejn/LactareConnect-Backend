@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { PreferenciasUsuario } from './entities/preferencias-usuario.entity';
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreatePreferenciasUsuarioDto } from './dto/create-preferencias-usuario.dto';
@@ -11,15 +15,33 @@ export class PreferenciasUsuarioService {
   constructor(
     @InjectRepository(PreferenciasUsuario)
     private readonly preferenciasRepository: Repository<PreferenciasUsuario>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
-  create(
+  async create(
     createPreferenciasUsuarioDto: CreatePreferenciasUsuarioDto,
   ): Promise<PreferenciasUsuario> {
     const { nutrizId, ...dados } = createPreferenciasUsuarioDto;
+
+    const nutriz = await this.dataSource
+      .getRepository(Nutriz)
+      .findOneBy({ id: nutrizId });
+    if (!nutriz) {
+      throw new NotFoundException(`Nutriz #${nutrizId} não encontrada`);
+    }
+    const existente = await this.preferenciasRepository.findOne({
+      where: { nutriz: { id: nutrizId } },
+    });
+    if (existente) {
+      throw new ConflictException(
+        `A nutriz #${nutrizId} já possui preferências cadastradas.`,
+      );
+    }
+
     const preferencias = this.preferenciasRepository.create({
       ...dados,
-      nutriz: { id: nutrizId } as Nutriz,
+      nutriz,
     });
     return this.preferenciasRepository.save(preferencias);
   }
@@ -46,8 +68,23 @@ export class PreferenciasUsuarioService {
     const preferencias = await this.findOne(id);
     const { nutrizId, ...dados } = updatePreferenciasUsuarioDto;
     Object.assign(preferencias, dados);
+
     if (nutrizId) {
-      preferencias.nutriz = { id: nutrizId } as Nutriz;
+      const nutriz = await this.dataSource
+        .getRepository(Nutriz)
+        .findOneBy({ id: nutrizId });
+      if (!nutriz) {
+        throw new NotFoundException(`Nutriz #${nutrizId} não encontrada`);
+      }
+      const existente = await this.preferenciasRepository.findOne({
+        where: { nutriz: { id: nutrizId } },
+      });
+      if (existente && existente.id !== id) {
+        throw new ConflictException(
+          `A nutriz #${nutrizId} já possui preferências cadastradas.`,
+        );
+      }
+      preferencias.nutriz = nutriz;
     }
     return this.preferenciasRepository.save(preferencias);
   }
