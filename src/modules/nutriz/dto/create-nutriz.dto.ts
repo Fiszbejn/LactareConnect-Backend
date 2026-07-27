@@ -9,30 +9,32 @@ import {
 import { NutrizStatus } from '../entities/nutriz.entity';
 
 export class CreateNutrizDto {
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'O nome deve ser um texto' })
+  @IsNotEmpty({ message: 'O nome é obrigatório' })
   nome: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'O CPF deve ser um texto' })
+  @IsNotEmpty({ message: 'O CPF é obrigatório' })
   cpf: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'A data de nascimento deve ser um texto' })
+  @IsNotEmpty({ message: 'A data de nascimento é obrigatória' })
   dataNascimento: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'O telefone deve ser um texto' })
+  @IsNotEmpty({ message: 'O telefone é obrigatório' })
   telefone: string;
 
-  @IsEmail()
+  @IsEmail({}, { message: 'Informe um e-mail válido' })
   email: string;
 
-  @IsString()
-  @MinLength(6)
+  @IsString({ message: 'A senha deve ser um texto' })
+  @MinLength(6, { message: 'A senha deve ter no mínimo 6 caracteres' })
   senha: string;
 
   @IsOptional()
-  @IsEnum(NutrizStatus)
+  @IsEnum(NutrizStatus, {
+    message: 'O status deve ser um dos valores: pendente, aprovada, inativa',
+  })
   status?: NutrizStatus;
 }
