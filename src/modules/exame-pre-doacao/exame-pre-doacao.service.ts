@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ExamePreDoacao } from './entities/exame-pre-doacao.entity';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import {
+  ExamePreDoacao,
+  ExameStatus,
+} from './entities/exame-pre-doacao.entity';
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreateExamePreDoacaoDto } from './dto/create-exame-pre-doacao.dto';
 import { UpdateExamePreDoacaoDto } from './dto/update-exame-pre-doacao.dto';
@@ -11,14 +18,28 @@ export class ExamePreDoacaoService {
   constructor(
     @InjectRepository(ExamePreDoacao)
     private readonly exameRepository: Repository<ExamePreDoacao>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
-  create(createExameDto: CreateExamePreDoacaoDto): Promise<ExamePreDoacao> {
+  async create(
+    createExameDto: CreateExamePreDoacaoDto,
+  ): Promise<ExamePreDoacao> {
     const { nutrizId, ...dados } = createExameDto;
-    const exame = this.exameRepository.create({
-      ...dados,
-      nutriz: { id: nutrizId } as Nutriz,
-    });
+
+    const nutriz = await this.dataSource
+      .getRepository(Nutriz)
+      .findOneBy({ id: nutrizId });
+    if (!nutriz) {
+      throw new NotFoundException(`Nutriz #${nutrizId} não encontrada`);
+    }
+    if (dados.status === ExameStatus.OK && !dados.arquivoUrl) {
+      throw new BadRequestException(
+        'Um exame só pode ser marcado como "ok" quando um arquivo (arquivoUrl) for enviado.',
+      );
+    }
+
+    const exame = this.exameRepository.create({ ...dados, nutriz });
     return this.exameRepository.save(exame);
   }
 
@@ -44,8 +65,21 @@ export class ExamePreDoacaoService {
     const exame = await this.findOne(id);
     const { nutrizId, ...dados } = updateExameDto;
     Object.assign(exame, dados);
+
+    if (exame.status === ExameStatus.OK && !exame.arquivoUrl) {
+      throw new BadRequestException(
+        'Um exame só pode ser marcado como "ok" quando um arquivo (arquivoUrl) for enviado.',
+      );
+    }
+
     if (nutrizId) {
-      exame.nutriz = { id: nutrizId } as Nutriz;
+      const nutriz = await this.dataSource
+        .getRepository(Nutriz)
+        .findOneBy({ id: nutrizId });
+      if (!nutriz) {
+        throw new NotFoundException(`Nutriz #${nutrizId} não encontrada`);
+      }
+      exame.nutriz = nutriz;
     }
     return this.exameRepository.save(exame);
   }

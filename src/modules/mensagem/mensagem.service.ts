@@ -1,8 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Mensagem } from './entities/mensagem.entity';
-import { Conversa } from '../conversa/entities/conversa.entity';
+import { Conversa, ConversaStatus } from '../conversa/entities/conversa.entity';
 import { CreateMensagemDto } from './dto/create-mensagem.dto';
 
 @Injectable()
@@ -10,14 +14,26 @@ export class MensagemService {
   constructor(
     @InjectRepository(Mensagem)
     private readonly mensagemRepository: Repository<Mensagem>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
-  create(createMensagemDto: CreateMensagemDto): Promise<Mensagem> {
+  async create(createMensagemDto: CreateMensagemDto): Promise<Mensagem> {
     const { conversaId, ...dados } = createMensagemDto;
-    const mensagem = this.mensagemRepository.create({
-      ...dados,
-      conversa: { id: conversaId } as Conversa,
-    });
+
+    const conversa = await this.dataSource
+      .getRepository(Conversa)
+      .findOneBy({ id: conversaId });
+    if (!conversa) {
+      throw new NotFoundException(`Conversa #${conversaId} não encontrada`);
+    }
+    if (conversa.status === ConversaStatus.ENCERRADA) {
+      throw new BadRequestException(
+        'Não é possível adicionar mensagens a uma conversa encerrada.',
+      );
+    }
+
+    const mensagem = this.mensagemRepository.create({ ...dados, conversa });
     return this.mensagemRepository.save(mensagem);
   }
 

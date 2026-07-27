@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { Administrador } from './entities/administrador.entity';
 import { BancoLeiteLactare } from '../banco-leite/entities/banco-leite.entity';
@@ -12,17 +16,42 @@ export class AdministradorService {
   constructor(
     @InjectRepository(Administrador)
     private readonly administradorRepository: Repository<Administrador>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(
     createAdministradorDto: CreateAdministradorDto,
   ): Promise<Administrador> {
     const { senha, bancoVinculadoId, ...dados } = createAdministradorDto;
+
+    const existente = await this.administradorRepository.findOneBy({
+      email: dados.email,
+    });
+    if (existente) {
+      throw new ConflictException(
+        `Já existe um administrador cadastrado com o email ${dados.email}`,
+      );
+    }
+
+    let bancoVinculado: BancoLeiteLactare | undefined;
+    if (bancoVinculadoId) {
+      const banco = await this.dataSource
+        .getRepository(BancoLeiteLactare)
+        .findOneBy({ id: bancoVinculadoId });
+      if (!banco) {
+        throw new NotFoundException(
+          `Banco de leite #${bancoVinculadoId} não encontrado`,
+        );
+      }
+      bancoVinculado = banco;
+    }
+
     const senhaHash = await bcrypt.hash(senha, 10);
     const administrador = this.administradorRepository.create({
       ...dados,
       senhaHash,
-      bancoVinculado: bancoVinculadoId ? { id: bancoVinculadoId } : undefined,
+      bancoVinculado,
     });
     return this.administradorRepository.save(administrador);
   }
@@ -55,9 +84,15 @@ export class AdministradorService {
       administrador.senhaHash = await bcrypt.hash(senha, 10);
     }
     if (bancoVinculadoId) {
-      administrador.bancoVinculado = {
-        id: bancoVinculadoId,
-      } as BancoLeiteLactare;
+      const banco = await this.dataSource
+        .getRepository(BancoLeiteLactare)
+        .findOneBy({ id: bancoVinculadoId });
+      if (!banco) {
+        throw new NotFoundException(
+          `Banco de leite #${bancoVinculadoId} não encontrado`,
+        );
+      }
+      administrador.bancoVinculado = banco;
     }
     return this.administradorRepository.save(administrador);
   }
