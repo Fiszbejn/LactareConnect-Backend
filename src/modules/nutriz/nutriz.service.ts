@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -21,6 +25,17 @@ export class NutrizService {
     const senhaHash = await bcrypt.hash(senha, 10);
 
     return this.dataSource.transaction(async (manager) => {
+      const existente = await manager.findOne(Nutriz, {
+        where: [{ cpf: dados.cpf }, { email: dados.email }],
+      });
+      if (existente) {
+        throw new ConflictException(
+          existente.cpf === dados.cpf
+            ? `Já existe uma nutriz cadastrada com o CPF ${dados.cpf}`
+            : `Já existe uma nutriz cadastrada com o email ${dados.email}`,
+        );
+      }
+
       const nutriz = manager.create(Nutriz, { ...dados, senhaHash });
       await manager.save(nutriz);
 
