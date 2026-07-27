@@ -37,6 +37,19 @@ export class AgendamentoService {
   ): Promise<Agendamento> {
     const { nutrizId, bancoId, ...dados } = createAgendamentoDto;
 
+    const nutriz = await this.dataSource
+      .getRepository(Nutriz)
+      .findOneBy({ id: nutrizId });
+    if (!nutriz) {
+      throw new NotFoundException(`Nutriz #${nutrizId} não encontrada`);
+    }
+    const banco = await this.dataSource
+      .getRepository(BancoLeiteLactare)
+      .findOneBy({ id: bancoId });
+    if (!banco) {
+      throw new NotFoundException(`Banco de leite #${bancoId} não encontrado`);
+    }
+
     const examesOk = await this.dataSource.getRepository(ExamePreDoacao).find({
       where: { nutriz: { id: nutrizId }, status: ExameStatus.OK },
     });
@@ -53,8 +66,8 @@ export class AgendamentoService {
     const agendamento = this.agendamentoRepository.create({
       ...dados,
       dataColeta: new Date(dados.dataColeta),
-      nutriz: { id: nutrizId } as Nutriz,
-      banco: { id: bancoId } as BancoLeiteLactare,
+      nutriz,
+      banco,
     });
     return this.agendamentoRepository.save(agendamento);
   }
@@ -87,10 +100,24 @@ export class AgendamentoService {
       agendamento.dataColeta = new Date(dados.dataColeta);
     }
     if (nutrizId) {
-      agendamento.nutriz = { id: nutrizId } as Nutriz;
+      const nutriz = await this.dataSource
+        .getRepository(Nutriz)
+        .findOneBy({ id: nutrizId });
+      if (!nutriz) {
+        throw new NotFoundException(`Nutriz #${nutrizId} não encontrada`);
+      }
+      agendamento.nutriz = nutriz;
     }
     if (bancoId) {
-      agendamento.banco = { id: bancoId } as BancoLeiteLactare;
+      const banco = await this.dataSource
+        .getRepository(BancoLeiteLactare)
+        .findOneBy({ id: bancoId });
+      if (!banco) {
+        throw new NotFoundException(
+          `Banco de leite #${bancoId} não encontrado`,
+        );
+      }
+      agendamento.banco = banco;
     }
     return this.agendamentoRepository.save(agendamento);
   }

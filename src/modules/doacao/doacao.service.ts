@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -53,6 +54,15 @@ export class DoacaoService {
         );
       }
 
+      const doacaoExistente = await manager.findOne(Doacao, {
+        where: { agendamento: { id: agendamentoId } },
+      });
+      if (doacaoExistente) {
+        throw new ConflictException(
+          `O agendamento #${agendamentoId} já possui uma doação registrada.`,
+        );
+      }
+
       const doacao = manager.create(Doacao, {
         ...dados,
         nutriz: { id: nutrizId } as Nutriz,
@@ -99,11 +109,26 @@ export class DoacaoService {
     const doacao = await this.findOne(id);
     const { nutrizId, agendamentoId, ...dados } = updateDoacaoDto;
     Object.assign(doacao, dados);
+
     if (nutrizId) {
-      doacao.nutriz = { id: nutrizId } as Nutriz;
+      const nutriz = await this.dataSource
+        .getRepository(Nutriz)
+        .findOneBy({ id: nutrizId });
+      if (!nutriz) {
+        throw new NotFoundException(`Nutriz #${nutrizId} não encontrada`);
+      }
+      doacao.nutriz = nutriz;
     }
     if (agendamentoId) {
-      doacao.agendamento = { id: agendamentoId } as Agendamento;
+      const agendamento = await this.dataSource
+        .getRepository(Agendamento)
+        .findOneBy({ id: agendamentoId });
+      if (!agendamento) {
+        throw new NotFoundException(
+          `Agendamento #${agendamentoId} não encontrado`,
+        );
+      }
+      doacao.agendamento = agendamento;
     }
     return this.doacaoRepository.save(doacao);
   }

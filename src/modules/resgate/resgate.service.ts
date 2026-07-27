@@ -101,11 +101,26 @@ export class ResgateService {
     const resgate = await this.findOne(id);
     const { nutrizId, recompensaId, ...dados } = updateResgateDto;
     Object.assign(resgate, dados);
+
     if (nutrizId) {
-      resgate.nutriz = { id: nutrizId } as Nutriz;
+      const nutriz = await this.dataSource
+        .getRepository(Nutriz)
+        .findOneBy({ id: nutrizId });
+      if (!nutriz) {
+        throw new NotFoundException(`Nutriz #${nutrizId} não encontrada`);
+      }
+      resgate.nutriz = nutriz;
     }
     if (recompensaId) {
-      resgate.recompensa = { id: recompensaId } as Recompensa;
+      const recompensa = await this.dataSource
+        .getRepository(Recompensa)
+        .findOneBy({ id: recompensaId });
+      if (!recompensa) {
+        throw new NotFoundException(
+          `Recompensa #${recompensaId} não encontrada`,
+        );
+      }
+      resgate.recompensa = recompensa;
     }
     return this.resgateRepository.save(resgate);
   }
