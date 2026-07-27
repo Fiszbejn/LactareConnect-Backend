@@ -8,12 +8,15 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdministradorService } from './administrador.service';
 import { CreateAdministradorDto } from './dto/create-administrador.dto';
 import { UpdateAdministradorDto } from './dto/update-administrador.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Administradores')
+@Roles('administrador')
+@ApiBearerAuth('access-token')
 @Controller('administradores')
 export class AdministradorController {
   constructor(private readonly administradorService: AdministradorService) {}

@@ -8,18 +8,21 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PerguntaFrequenteService } from './pergunta-frequente.service';
 import { CreatePerguntaFrequenteDto } from './dto/create-pergunta-frequente.dto';
 import { UpdatePerguntaFrequenteDto } from './dto/update-pergunta-frequente.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Perguntas Frequentes')
+@ApiBearerAuth('access-token')
 @Controller('perguntas-frequentes')
 export class PerguntaFrequenteController {
   constructor(
     private readonly perguntaFrequenteService: PerguntaFrequenteService,
   ) {}
 
+  @Roles('administrador')
   @ApiOperation({ summary: 'Cadastrar uma pergunta frequente' })
   @Post()
   create(@Body() createPerguntaFrequenteDto: CreatePerguntaFrequenteDto) {
@@ -38,6 +41,7 @@ export class PerguntaFrequenteController {
     return this.perguntaFrequenteService.findOne(id);
   }
 
+  @Roles('administrador')
   @ApiOperation({ summary: 'Atualizar uma pergunta frequente' })
   @Patch(':id')
   update(
@@ -47,6 +51,7 @@ export class PerguntaFrequenteController {
     return this.perguntaFrequenteService.update(id, updatePerguntaFrequenteDto);
   }
 
+  @Roles('administrador')
   @ApiOperation({ summary: 'Remover uma pergunta frequente' })
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {

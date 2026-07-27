@@ -1,8 +1,11 @@
 import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TransacaoGotinhasService } from './transacao-gotinhas.service';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Transações de Gotinhas')
+@Roles('administrador')
+@ApiBearerAuth('access-token')
 @Controller('transacoes-gotinhas')
 export class TransacaoGotinhasController {
   constructor(

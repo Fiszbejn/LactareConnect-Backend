@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import { Nutriz } from './entities/nutriz.entity';
 import { PreferenciasUsuario } from '../preferencias-usuario/entities/preferencias-usuario.entity';
 import { CreateNutrizDto } from './dto/create-nutriz.dto';
 import { UpdateNutrizDto } from './dto/update-nutriz.dto';
+import { AuthUser } from '../auth/types/auth-user.type';
 
 @Injectable()
 export class NutrizService {
@@ -54,7 +56,7 @@ export class NutrizService {
     });
   }
 
-  async findOne(id: number): Promise<Nutriz> {
+  async findOne(id: number, user: AuthUser): Promise<Nutriz> {
     const nutriz = await this.nutrizRepository.findOne({
       where: { id },
       relations: { endereco: true, preferencias: true },
@@ -62,11 +64,20 @@ export class NutrizService {
     if (!nutriz) {
       throw new NotFoundException(`Nutriz #${id} não encontrada`);
     }
+    if (user.tipo === 'nutriz' && user.id !== nutriz.id) {
+      throw new ForbiddenException(
+        'Você só pode acessar o próprio perfil de nutriz.',
+      );
+    }
     return nutriz;
   }
 
-  async update(id: number, updateNutrizDto: UpdateNutrizDto): Promise<Nutriz> {
-    const nutriz = await this.findOne(id);
+  async update(
+    id: number,
+    updateNutrizDto: UpdateNutrizDto,
+    user: AuthUser,
+  ): Promise<Nutriz> {
+    const nutriz = await this.findOne(id, user);
     const { senha, ...dados } = updateNutrizDto;
     Object.assign(nutriz, dados);
     if (senha) {
@@ -75,8 +86,8 @@ export class NutrizService {
     return this.nutrizRepository.save(nutriz);
   }
 
-  async remove(id: number): Promise<void> {
-    const nutriz = await this.findOne(id);
+  async remove(id: number, user: AuthUser): Promise<void> {
+    const nutriz = await this.findOne(id, user);
     await this.nutrizRepository.remove(nutriz);
   }
 }

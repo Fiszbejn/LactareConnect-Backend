@@ -6,11 +6,14 @@ import {
   ParseIntPipe,
   Post,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MensagemService } from './mensagem.service';
 import { CreateMensagemDto } from './dto/create-mensagem.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Mensagens')
+@Roles('administrador')
+@ApiBearerAuth('access-token')
 @Controller('mensagens')
 export class MensagemController {
   constructor(private readonly mensagemService: MensagemService) {}

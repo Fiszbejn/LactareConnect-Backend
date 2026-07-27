@@ -8,16 +8,19 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RecompensaService } from './recompensa.service';
 import { CreateRecompensaDto } from './dto/create-recompensa.dto';
 import { UpdateRecompensaDto } from './dto/update-recompensa.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Recompensas')
+@ApiBearerAuth('access-token')
 @Controller('recompensas')
 export class RecompensaController {
   constructor(private readonly recompensaService: RecompensaService) {}
 
+  @Roles('administrador')
   @ApiOperation({ summary: 'Cadastrar uma recompensa' })
   @Post()
   create(@Body() createRecompensaDto: CreateRecompensaDto) {
@@ -36,6 +39,7 @@ export class RecompensaController {
     return this.recompensaService.findOne(id);
   }
 
+  @Roles('administrador')
   @ApiOperation({ summary: 'Atualizar uma recompensa' })
   @Patch(':id')
   update(
@@ -45,6 +49,7 @@ export class RecompensaController {
     return this.recompensaService.update(id, updateRecompensaDto);
   }
 
+  @Roles('administrador')
   @ApiOperation({ summary: 'Remover uma recompensa' })
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {

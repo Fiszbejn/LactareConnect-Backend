@@ -7,11 +7,14 @@ import {
   ParseIntPipe,
   Post,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RelatorioGeradoService } from './relatorio-gerado.service';
 import { CreateRelatorioGeradoDto } from './dto/create-relatorio-gerado.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Relatórios Gerados')
+@Roles('administrador')
+@ApiBearerAuth('access-token')
 @Controller('relatorios-gerados')
 export class RelatorioGeradoController {
   constructor(

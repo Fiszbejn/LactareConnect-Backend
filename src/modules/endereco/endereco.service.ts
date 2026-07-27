@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { Endereco } from './entities/endereco.entity';
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreateEnderecoDto } from './dto/create-endereco.dto';
 import { UpdateEnderecoDto } from './dto/update-endereco.dto';
+import { AuthUser } from '../auth/types/auth-user.type';
 
 @Injectable()
 export class EnderecoService {
@@ -19,8 +21,17 @@ export class EnderecoService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(createEnderecoDto: CreateEnderecoDto): Promise<Endereco> {
+  async create(
+    createEnderecoDto: CreateEnderecoDto,
+    user: AuthUser,
+  ): Promise<Endereco> {
     const { nutrizId, ...dados } = createEnderecoDto;
+
+    if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+      throw new ForbiddenException(
+        'Você só pode cadastrar um endereço para você mesma.',
+      );
+    }
 
     const nutriz = await this.dataSource
       .getRepository(Nutriz)
@@ -41,11 +52,12 @@ export class EnderecoService {
     return this.enderecoRepository.save(endereco);
   }
 
-  findAll(): Promise<Endereco[]> {
-    return this.enderecoRepository.find({ relations: { nutriz: true } });
+  findAll(user: AuthUser): Promise<Endereco[]> {
+    const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
+    return this.enderecoRepository.find({ where, relations: { nutriz: true } });
   }
 
-  async findOne(id: number): Promise<Endereco> {
+  async findOne(id: number, user: AuthUser): Promise<Endereco> {
     const endereco = await this.enderecoRepository.findOne({
       where: { id },
       relations: { nutriz: true },
@@ -53,18 +65,29 @@ export class EnderecoService {
     if (!endereco) {
       throw new NotFoundException(`Endereço #${id} não encontrado`);
     }
+    if (user.tipo === 'nutriz' && user.id !== endereco.nutriz.id) {
+      throw new ForbiddenException(
+        'Você não tem permissão para acessar este endereço.',
+      );
+    }
     return endereco;
   }
 
   async update(
     id: number,
     updateEnderecoDto: UpdateEnderecoDto,
+    user: AuthUser,
   ): Promise<Endereco> {
-    const endereco = await this.findOne(id);
+    const endereco = await this.findOne(id, user);
     const { nutrizId, ...dados } = updateEnderecoDto;
     Object.assign(endereco, dados);
 
     if (nutrizId) {
+      if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+        throw new ForbiddenException(
+          'Você não pode transferir este endereço para outra nutriz.',
+        );
+      }
       const nutriz = await this.dataSource
         .getRepository(Nutriz)
         .findOneBy({ id: nutrizId });
@@ -84,8 +107,8 @@ export class EnderecoService {
     return this.enderecoRepository.save(endereco);
   }
 
-  async remove(id: number): Promise<void> {
-    const endereco = await this.findOne(id);
+  async remove(id: number, user: AuthUser): Promise<void> {
+    const endereco = await this.findOne(id, user);
     await this.enderecoRepository.remove(endereco);
   }
 }

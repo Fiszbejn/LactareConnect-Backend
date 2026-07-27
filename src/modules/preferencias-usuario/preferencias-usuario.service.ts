@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { PreferenciasUsuario } from './entities/preferencias-usuario.entity';
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreatePreferenciasUsuarioDto } from './dto/create-preferencias-usuario.dto';
 import { UpdatePreferenciasUsuarioDto } from './dto/update-preferencias-usuario.dto';
+import { AuthUser } from '../auth/types/auth-user.type';
 
 @Injectable()
 export class PreferenciasUsuarioService {
@@ -46,11 +48,15 @@ export class PreferenciasUsuarioService {
     return this.preferenciasRepository.save(preferencias);
   }
 
-  findAll(): Promise<PreferenciasUsuario[]> {
-    return this.preferenciasRepository.find({ relations: { nutriz: true } });
+  findAll(user: AuthUser): Promise<PreferenciasUsuario[]> {
+    const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
+    return this.preferenciasRepository.find({
+      where,
+      relations: { nutriz: true },
+    });
   }
 
-  async findOne(id: number): Promise<PreferenciasUsuario> {
+  async findOne(id: number, user: AuthUser): Promise<PreferenciasUsuario> {
     const preferencias = await this.preferenciasRepository.findOne({
       where: { id },
       relations: { nutriz: true },
@@ -58,18 +64,29 @@ export class PreferenciasUsuarioService {
     if (!preferencias) {
       throw new NotFoundException(`Preferências #${id} não encontradas`);
     }
+    if (user.tipo === 'nutriz' && user.id !== preferencias.nutriz.id) {
+      throw new ForbiddenException(
+        'Você não tem permissão para acessar estas preferências.',
+      );
+    }
     return preferencias;
   }
 
   async update(
     id: number,
     updatePreferenciasUsuarioDto: UpdatePreferenciasUsuarioDto,
+    user: AuthUser,
   ): Promise<PreferenciasUsuario> {
-    const preferencias = await this.findOne(id);
+    const preferencias = await this.findOne(id, user);
     const { nutrizId, ...dados } = updatePreferenciasUsuarioDto;
     Object.assign(preferencias, dados);
 
     if (nutrizId) {
+      if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+        throw new ForbiddenException(
+          'Você não pode transferir estas preferências para outra nutriz.',
+        );
+      }
       const nutriz = await this.dataSource
         .getRepository(Nutriz)
         .findOneBy({ id: nutrizId });

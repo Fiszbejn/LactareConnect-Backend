@@ -8,16 +8,21 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NutrizService } from './nutriz.service';
 import { CreateNutrizDto } from './dto/create-nutriz.dto';
 import { UpdateNutrizDto } from './dto/update-nutriz.dto';
+import { Public } from '../auth/decorators/public.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { AuthUser } from '../auth/types/auth-user.type';
 
 @ApiTags('Nutrizes')
 @Controller('nutrizes')
 export class NutrizController {
   constructor(private readonly nutrizService: NutrizService) {}
 
+  @Public()
   @ApiOperation({
     summary: 'Cadastrar uma nova nutriz (cria também as preferências padrão)',
   })
@@ -26,30 +31,46 @@ export class NutrizController {
     return this.nutrizService.create(createNutrizDto);
   }
 
-  @ApiOperation({ summary: 'Listar todas as nutrizes' })
+  @Roles('administrador')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Listar todas as nutrizes (apenas administrador)' })
   @Get()
   findAll() {
     return this.nutrizService.findAll();
   }
 
-  @ApiOperation({ summary: 'Buscar uma nutriz pelo id' })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Buscar uma nutriz pelo id (nutriz só acessa o próprio perfil)',
+  })
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.nutrizService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.nutrizService.findOne(id, user);
   }
 
-  @ApiOperation({ summary: 'Atualizar os dados de uma nutriz' })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary:
+      'Atualizar os dados de uma nutriz (nutriz só atualiza o próprio perfil)',
+  })
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateNutrizDto: UpdateNutrizDto,
+    @CurrentUser() user: AuthUser,
   ) {
-    return this.nutrizService.update(id, updateNutrizDto);
+    return this.nutrizService.update(id, updateNutrizDto, user);
   }
 
-  @ApiOperation({ summary: 'Remover uma nutriz' })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Remover uma nutriz (nutriz só remove o próprio perfil)',
+  })
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.nutrizService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser) {
+    return this.nutrizService.remove(id, user);
   }
 }

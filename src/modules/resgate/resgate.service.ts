@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import {
 } from '../transacao-gotinhas/entities/transacao-gotinhas.entity';
 import { CreateResgateDto } from './dto/create-resgate.dto';
 import { UpdateResgateDto } from './dto/update-resgate.dto';
+import { AuthUser } from '../auth/types/auth-user.type';
 
 @Injectable()
 export class ResgateService {
@@ -24,8 +26,14 @@ export class ResgateService {
     private readonly dataSource: DataSource,
   ) {}
 
-  create(createResgateDto: CreateResgateDto): Promise<Resgate> {
+  create(createResgateDto: CreateResgateDto, user: AuthUser): Promise<Resgate> {
     const { nutrizId, recompensaId, ...dados } = createResgateDto;
+
+    if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+      throw new ForbiddenException(
+        'Você só pode resgatar uma recompensa para você mesma.',
+      );
+    }
 
     return this.dataSource.transaction(async (manager) => {
       const nutriz = await manager.findOneBy(Nutriz, { id: nutrizId });
@@ -82,13 +90,15 @@ export class ResgateService {
     });
   }
 
-  findAll(): Promise<Resgate[]> {
+  findAll(user: AuthUser): Promise<Resgate[]> {
+    const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
     return this.resgateRepository.find({
+      where,
       relations: { nutriz: true, recompensa: true },
     });
   }
 
-  async findOne(id: number): Promise<Resgate> {
+  async findOne(id: number, user: AuthUser): Promise<Resgate> {
     const resgate = await this.resgateRepository.findOne({
       where: { id },
       relations: { nutriz: true, recompensa: true },
@@ -96,18 +106,29 @@ export class ResgateService {
     if (!resgate) {
       throw new NotFoundException(`Resgate #${id} não encontrado`);
     }
+    if (user.tipo === 'nutriz' && user.id !== resgate.nutriz.id) {
+      throw new ForbiddenException(
+        'Você não tem permissão para acessar este resgate.',
+      );
+    }
     return resgate;
   }
 
   async update(
     id: number,
     updateResgateDto: UpdateResgateDto,
+    user: AuthUser,
   ): Promise<Resgate> {
-    const resgate = await this.findOne(id);
+    const resgate = await this.findOne(id, user);
     const { nutrizId, recompensaId, ...dados } = updateResgateDto;
     Object.assign(resgate, dados);
 
     if (nutrizId) {
+      if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+        throw new ForbiddenException(
+          'Você não pode transferir este resgate para outra nutriz.',
+        );
+      }
       const nutriz = await this.dataSource
         .getRepository(Nutriz)
         .findOneBy({ id: nutrizId });
