@@ -1,4 +1,4 @@
-import { IsDateString, IsInt, IsOptional, IsPositive } from 'class-validator';
+import { IsDateString, IsInt, IsPositive } from 'class-validator';
 
 export class CreateDoacaoDto {
   @IsInt()
@@ -12,8 +12,7 @@ export class CreateDoacaoDto {
   @IsPositive()
   nutrizId: number;
 
-  @IsOptional()
   @IsInt()
   @IsPositive()
-  agendamentoId?: number;
+  agendamentoId: number;
 }

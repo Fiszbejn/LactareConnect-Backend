@@ -48,6 +48,9 @@ export class Nutriz {
   @Column({ type: 'varchar', default: NutrizStatus.PENDENTE })
   status: NutrizStatus;
 
+  @Column({ name: 'saldo_gotinhas', type: 'int', default: 0 })
+  saldoGotinhas: number;
+
   @CreateDateColumn({ name: 'data_cadastro' })
   dataCadastro: Date;
 

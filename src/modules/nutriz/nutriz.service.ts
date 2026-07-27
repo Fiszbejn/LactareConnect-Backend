@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { Nutriz } from './entities/nutriz.entity';
+import { PreferenciasUsuario } from '../preferencias-usuario/entities/preferencias-usuario.entity';
 import { CreateNutrizDto } from './dto/create-nutriz.dto';
 import { UpdateNutrizDto } from './dto/update-nutriz.dto';
 
@@ -11,13 +12,25 @@ export class NutrizService {
   constructor(
     @InjectRepository(Nutriz)
     private readonly nutrizRepository: Repository<Nutriz>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createNutrizDto: CreateNutrizDto): Promise<Nutriz> {
     const { senha, ...dados } = createNutrizDto;
     const senhaHash = await bcrypt.hash(senha, 10);
-    const nutriz = this.nutrizRepository.create({ ...dados, senhaHash });
-    return this.nutrizRepository.save(nutriz);
+
+    return this.dataSource.transaction(async (manager) => {
+      const nutriz = manager.create(Nutriz, { ...dados, senhaHash });
+      await manager.save(nutriz);
+
+      const preferencias = manager.create(PreferenciasUsuario, {
+        nutriz: { id: nutriz.id } as Nutriz,
+      });
+      await manager.save(preferencias);
+
+      return nutriz;
+    });
   }
 
   findAll(): Promise<Nutriz[]> {
