@@ -24,9 +24,7 @@ export class Doacao {
   @JoinColumn({ name: 'nutriz_id' })
   nutriz: Nutriz;
 
-  @OneToOne(() => Agendamento, (agendamento) => agendamento.doacao, {
-    nullable: true,
-  })
+  @OneToOne(() => Agendamento, (agendamento) => agendamento.doacao)
   @JoinColumn({ name: 'agendamento_id' })
   agendamento: Agendamento;
 }

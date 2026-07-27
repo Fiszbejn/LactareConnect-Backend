@@ -12,11 +12,6 @@ export class TransacaoGotinhasController {
     return this.transacaoGotinhasService.findAll();
   }
 
-  @Get('saldo/:nutrizId')
-  saldoPorNutriz(@Param('nutrizId', ParseIntPipe) nutrizId: number) {
-    return this.transacaoGotinhasService.saldoPorNutriz(nutrizId);
-  }
-
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.transacaoGotinhasService.findOne(id);

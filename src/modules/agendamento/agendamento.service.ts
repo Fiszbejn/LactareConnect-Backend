@@ -1,21 +1,55 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Agendamento } from './entities/agendamento.entity';
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { BancoLeiteLactare } from '../banco-leite/entities/banco-leite.entity';
+import {
+  ExamePreDoacao,
+  ExameStatus,
+  ExameTipo,
+} from '../exame-pre-doacao/entities/exame-pre-doacao.entity';
 import { CreateAgendamentoDto } from './dto/create-agendamento.dto';
 import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
+
+const EXAMES_OBRIGATORIOS = [
+  ExameTipo.HEMOGRAMA,
+  ExameTipo.SOROLOGIA_HIV,
+  ExameTipo.VDRL,
+  ExameTipo.SOROLOGIA_HEPATITES_B_C,
+];
 
 @Injectable()
 export class AgendamentoService {
   constructor(
     @InjectRepository(Agendamento)
     private readonly agendamentoRepository: Repository<Agendamento>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
-  create(createAgendamentoDto: CreateAgendamentoDto): Promise<Agendamento> {
+  async create(
+    createAgendamentoDto: CreateAgendamentoDto,
+  ): Promise<Agendamento> {
     const { nutrizId, bancoId, ...dados } = createAgendamentoDto;
+
+    const examesOk = await this.dataSource.getRepository(ExamePreDoacao).find({
+      where: { nutriz: { id: nutrizId }, status: ExameStatus.OK },
+    });
+    const tiposRealizados = new Set(examesOk.map((exame) => exame.tipoExame));
+    const examesFaltando = EXAMES_OBRIGATORIOS.filter(
+      (tipo) => !tiposRealizados.has(tipo),
+    );
+    if (examesFaltando.length > 0) {
+      throw new BadRequestException(
+        `Não é possível agendar: exames obrigatórios pendentes (${examesFaltando.join(', ')}).`,
+      );
+    }
+
     const agendamento = this.agendamentoRepository.create({
       ...dados,
       dataColeta: new Date(dados.dataColeta),

@@ -12,6 +12,9 @@ export enum ExameTipo {
   HEMOGRAMA = 'hemograma',
   SOROLOGIAS = 'sorologias',
   HTLV = 'htlv',
+  SOROLOGIA_HIV = 'sorologia_hiv',
+  VDRL = 'vdrl',
+  SOROLOGIA_HEPATITES_B_C = 'sorologia_hepatites_b_c',
 }
 
 export enum ExameStatus {

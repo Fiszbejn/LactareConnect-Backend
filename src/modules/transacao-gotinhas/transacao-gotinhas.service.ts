@@ -40,14 +40,4 @@ export class TransacaoGotinhasService {
     }
     return transacao;
   }
-
-  async saldoPorNutriz(nutrizId: number): Promise<number> {
-    const { saldo } = await this.transacaoRepository
-      .createQueryBuilder('transacao')
-      .select('COALESCE(SUM(transacao.valor), 0)', 'saldo')
-      .where('transacao.nutriz_id = :nutrizId', { nutrizId })
-      .getRawOne<{ saldo: string }>()
-      .then((raw) => ({ saldo: Number(raw?.saldo ?? 0) }));
-    return saldo;
-  }
 }
