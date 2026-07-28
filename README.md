@@ -1,26 +1,12 @@
-<div align="center">
+# LactareConnect — Backend
 
-# 🤱 LactareConnect
-
-**Backend da solução LactareConnect**
-
-Plataforma que conecta nutrizes doadoras a bancos de leite humano, desenvolvida como entrega do **Challenge FIAP em parceria com a Eurofarma**.
-
-[![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?style=flat&logo=nestjs&logoColor=white)](https://nestjs.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Oracle Database](https://img.shields.io/badge/Database-Oracle-F80000?style=flat&logo=oracle&logoColor=white)](https://www.oracle.com/database/)
-[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Swagger](https://img.shields.io/badge/API%20Docs-Swagger-85EA2D?style=flat&logo=swagger&logoColor=black)](http://localhost:3000/docs)
-
-</div>
-
----
+Backend da solução **LactareConnect**, desenvolvida como entrega do Challenge FIAP em parceria com a Eurofarma.
 
 ## Sobre o projeto
 
-O **LactareConnect** conecta nutrizes doadoras a bancos de leite humano, cobrindo todo o fluxo de doação: exames pré-doação, agendamento de coleta e registro da doação. A plataforma também conta com um sistema de recompensas em **"Gotinhas"** (moeda virtual ganha ao doar, trocável por prêmios), suporte via chatbot (**"Lila"**) e um painel administrativo interno (campanhas, relatórios).
+O LactareConnect conecta nutrizes doadoras a bancos de leite humano, cobrindo todo o fluxo de doação: exames pré-doação, agendamento de coleta e registro da doação. A plataforma também conta com um sistema de recompensas em "Gotinhas" (moeda virtual ganha ao doar, trocável por prêmios), suporte via chatbot ("Lila") e um painel administrativo interno (campanhas, relatórios).
 
-Este repositório contém o **backend** da solução: uma API REST em NestJS + TypeScript, com persistência em Oracle.
+Este repositório contém o backend da solução: uma API REST em NestJS + TypeScript, com persistência em Oracle.
 
 ## Stack
 
