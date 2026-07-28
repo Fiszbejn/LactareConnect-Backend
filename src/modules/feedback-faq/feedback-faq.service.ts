@@ -11,6 +11,10 @@ import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreateFeedbackFaqDto } from './dto/create-feedback-faq.dto';
 import { UpdateFeedbackFaqDto } from './dto/update-feedback-faq.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
+import {
+  FeedbackFaqResponseDto,
+  toFeedbackFaqResponseDto,
+} from './dto/feedback-faq-response.dto';
 
 @Injectable()
 export class FeedbackFaqService {
@@ -24,7 +28,7 @@ export class FeedbackFaqService {
   async create(
     createFeedbackDto: CreateFeedbackFaqDto,
     user: AuthUser,
-  ): Promise<FeedbackFaq> {
+  ): Promise<FeedbackFaqResponseDto> {
     const { perguntaId, nutrizId, ...dados } = createFeedbackDto;
 
     if (user.tipo === 'nutriz' && user.id !== nutrizId) {
@@ -53,18 +57,21 @@ export class FeedbackFaqService {
       pergunta,
       nutriz,
     });
-    return this.feedbackRepository.save(feedback);
+    return toFeedbackFaqResponseDto(
+      await this.feedbackRepository.save(feedback),
+    );
   }
 
-  findAll(user: AuthUser): Promise<FeedbackFaq[]> {
+  async findAll(user: AuthUser): Promise<FeedbackFaqResponseDto[]> {
     const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
-    return this.feedbackRepository.find({
+    const feedbacks = await this.feedbackRepository.find({
       where,
       relations: { pergunta: true, nutriz: true },
     });
+    return feedbacks.map(toFeedbackFaqResponseDto);
   }
 
-  async findOne(id: number, user: AuthUser): Promise<FeedbackFaq> {
+  private async buscarPorId(id: number, user: AuthUser): Promise<FeedbackFaq> {
     const feedback = await this.feedbackRepository.findOne({
       where: { id },
       relations: { pergunta: true, nutriz: true },
@@ -80,12 +87,16 @@ export class FeedbackFaqService {
     return feedback;
   }
 
+  async findOne(id: number, user: AuthUser): Promise<FeedbackFaqResponseDto> {
+    return toFeedbackFaqResponseDto(await this.buscarPorId(id, user));
+  }
+
   async update(
     id: number,
     updateFeedbackDto: UpdateFeedbackFaqDto,
     user: AuthUser,
-  ): Promise<FeedbackFaq> {
-    const feedback = await this.findOne(id, user);
+  ): Promise<FeedbackFaqResponseDto> {
+    const feedback = await this.buscarPorId(id, user);
     const { perguntaId, nutrizId, ...dados } = updateFeedbackDto;
     Object.assign(feedback, dados);
 
@@ -114,6 +125,8 @@ export class FeedbackFaqService {
       }
       feedback.pergunta = pergunta;
     }
-    return this.feedbackRepository.save(feedback);
+    return toFeedbackFaqResponseDto(
+      await this.feedbackRepository.save(feedback),
+    );
   }
 }

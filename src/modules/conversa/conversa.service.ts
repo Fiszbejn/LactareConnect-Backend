@@ -4,6 +4,10 @@ import { DataSource, Repository } from 'typeorm';
 import { Conversa, ConversaStatus } from './entities/conversa.entity';
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreateConversaDto } from './dto/create-conversa.dto';
+import {
+  ConversaResponseDto,
+  toConversaResponseDto,
+} from './dto/conversa-response.dto';
 
 @Injectable()
 export class ConversaService {
@@ -14,7 +18,9 @@ export class ConversaService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(createConversaDto: CreateConversaDto): Promise<Conversa> {
+  async create(
+    createConversaDto: CreateConversaDto,
+  ): Promise<ConversaResponseDto> {
     const { nutrizId, ...dados } = createConversaDto;
 
     const nutriz = await this.dataSource
@@ -33,14 +39,17 @@ export class ConversaService {
     }
 
     const conversa = this.conversaRepository.create({ ...dados, nutriz });
-    return this.conversaRepository.save(conversa);
+    return toConversaResponseDto(await this.conversaRepository.save(conversa));
   }
 
-  findAll(): Promise<Conversa[]> {
-    return this.conversaRepository.find({ relations: { nutriz: true } });
+  async findAll(): Promise<ConversaResponseDto[]> {
+    const conversas = await this.conversaRepository.find({
+      relations: { nutriz: true },
+    });
+    return conversas.map(toConversaResponseDto);
   }
 
-  async findOne(id: number): Promise<Conversa> {
+  async findOne(id: number): Promise<ConversaResponseDto> {
     const conversa = await this.conversaRepository.findOne({
       where: { id },
       relations: { nutriz: true, mensagens: true },
@@ -48,6 +57,6 @@ export class ConversaService {
     if (!conversa) {
       throw new NotFoundException(`Conversa #${id} não encontrada`);
     }
-    return conversa;
+    return toConversaResponseDto(conversa);
   }
 }

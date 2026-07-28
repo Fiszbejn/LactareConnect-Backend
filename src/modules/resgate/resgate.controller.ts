@@ -7,10 +7,17 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ResgateService } from './resgate.service';
 import { CreateResgateDto } from './dto/create-resgate.dto';
 import { UpdateResgateDto } from './dto/update-resgate.dto';
+import { ResgateResponseDto } from './dto/resgate-response.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthUser } from '../auth/types/auth-user.type';
 
@@ -24,6 +31,7 @@ export class ResgateController {
     summary:
       'Resgatar uma recompensa (exige saldo de gotinhas suficiente e recompensa ativa com estoque)',
   })
+  @ApiCreatedResponse({ type: ResgateResponseDto })
   @Post()
   create(
     @Body() createResgateDto: CreateResgateDto,
@@ -36,12 +44,14 @@ export class ResgateController {
     summary:
       'Listar resgates (nutriz vê só os próprios; administrador vê todos)',
   })
+  @ApiOkResponse({ type: ResgateResponseDto, isArray: true })
   @Get()
   findAll(@CurrentUser() user: AuthUser) {
     return this.resgateService.findAll(user);
   }
 
   @ApiOperation({ summary: 'Buscar um resgate pelo id' })
+  @ApiOkResponse({ type: ResgateResponseDto })
   @Get(':id')
   findOne(
     @Param('id', ParseIntPipe) id: number,
@@ -51,6 +61,7 @@ export class ResgateController {
   }
 
   @ApiOperation({ summary: 'Atualizar um resgate' })
+  @ApiOkResponse({ type: ResgateResponseDto })
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,

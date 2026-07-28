@@ -4,6 +4,10 @@ import { Repository } from 'typeorm';
 import { PerguntaFrequente } from './entities/pergunta-frequente.entity';
 import { CreatePerguntaFrequenteDto } from './dto/create-pergunta-frequente.dto';
 import { UpdatePerguntaFrequenteDto } from './dto/update-pergunta-frequente.dto';
+import {
+  PerguntaFrequenteResponseDto,
+  toPerguntaFrequenteResponseDto,
+} from './dto/pergunta-frequente-response.dto';
 
 @Injectable()
 export class PerguntaFrequenteService {
@@ -12,18 +16,7 @@ export class PerguntaFrequenteService {
     private readonly perguntaRepository: Repository<PerguntaFrequente>,
   ) {}
 
-  create(
-    createPerguntaDto: CreatePerguntaFrequenteDto,
-  ): Promise<PerguntaFrequente> {
-    const pergunta = this.perguntaRepository.create(createPerguntaDto);
-    return this.perguntaRepository.save(pergunta);
-  }
-
-  findAll(): Promise<PerguntaFrequente[]> {
-    return this.perguntaRepository.find({ order: { ordem: 'ASC' } });
-  }
-
-  async findOne(id: number): Promise<PerguntaFrequente> {
+  private async buscarPorId(id: number): Promise<PerguntaFrequente> {
     const pergunta = await this.perguntaRepository.findOne({ where: { id } });
     if (!pergunta) {
       throw new NotFoundException(`Pergunta frequente #${id} não encontrada`);
@@ -31,17 +24,39 @@ export class PerguntaFrequenteService {
     return pergunta;
   }
 
+  async create(
+    createPerguntaDto: CreatePerguntaFrequenteDto,
+  ): Promise<PerguntaFrequenteResponseDto> {
+    const pergunta = this.perguntaRepository.create(createPerguntaDto);
+    return toPerguntaFrequenteResponseDto(
+      await this.perguntaRepository.save(pergunta),
+    );
+  }
+
+  async findAll(): Promise<PerguntaFrequenteResponseDto[]> {
+    const perguntas = await this.perguntaRepository.find({
+      order: { ordem: 'ASC' },
+    });
+    return perguntas.map(toPerguntaFrequenteResponseDto);
+  }
+
+  async findOne(id: number): Promise<PerguntaFrequenteResponseDto> {
+    return toPerguntaFrequenteResponseDto(await this.buscarPorId(id));
+  }
+
   async update(
     id: number,
     updatePerguntaDto: UpdatePerguntaFrequenteDto,
-  ): Promise<PerguntaFrequente> {
-    const pergunta = await this.findOne(id);
+  ): Promise<PerguntaFrequenteResponseDto> {
+    const pergunta = await this.buscarPorId(id);
     Object.assign(pergunta, updatePerguntaDto);
-    return this.perguntaRepository.save(pergunta);
+    return toPerguntaFrequenteResponseDto(
+      await this.perguntaRepository.save(pergunta),
+    );
   }
 
   async remove(id: number): Promise<void> {
-    const pergunta = await this.findOne(id);
+    const pergunta = await this.buscarPorId(id);
     await this.perguntaRepository.remove(pergunta);
   }
 }

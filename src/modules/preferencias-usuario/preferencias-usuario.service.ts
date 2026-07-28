@@ -11,6 +11,10 @@ import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreatePreferenciasUsuarioDto } from './dto/create-preferencias-usuario.dto';
 import { UpdatePreferenciasUsuarioDto } from './dto/update-preferencias-usuario.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
+import {
+  PreferenciasUsuarioResponseDto,
+  toPreferenciasUsuarioResponseDto,
+} from './dto/preferencias-usuario-response.dto';
 
 @Injectable()
 export class PreferenciasUsuarioService {
@@ -23,7 +27,7 @@ export class PreferenciasUsuarioService {
 
   async create(
     createPreferenciasUsuarioDto: CreatePreferenciasUsuarioDto,
-  ): Promise<PreferenciasUsuario> {
+  ): Promise<PreferenciasUsuarioResponseDto> {
     const { nutrizId, ...dados } = createPreferenciasUsuarioDto;
 
     const nutriz = await this.dataSource
@@ -45,18 +49,24 @@ export class PreferenciasUsuarioService {
       ...dados,
       nutriz,
     });
-    return this.preferenciasRepository.save(preferencias);
+    return toPreferenciasUsuarioResponseDto(
+      await this.preferenciasRepository.save(preferencias),
+    );
   }
 
-  findAll(user: AuthUser): Promise<PreferenciasUsuario[]> {
+  async findAll(user: AuthUser): Promise<PreferenciasUsuarioResponseDto[]> {
     const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
-    return this.preferenciasRepository.find({
+    const preferencias = await this.preferenciasRepository.find({
       where,
       relations: { nutriz: true },
     });
+    return preferencias.map(toPreferenciasUsuarioResponseDto);
   }
 
-  async findOne(id: number, user: AuthUser): Promise<PreferenciasUsuario> {
+  private async buscarPorId(
+    id: number,
+    user: AuthUser,
+  ): Promise<PreferenciasUsuario> {
     const preferencias = await this.preferenciasRepository.findOne({
       where: { id },
       relations: { nutriz: true },
@@ -72,12 +82,19 @@ export class PreferenciasUsuarioService {
     return preferencias;
   }
 
+  async findOne(
+    id: number,
+    user: AuthUser,
+  ): Promise<PreferenciasUsuarioResponseDto> {
+    return toPreferenciasUsuarioResponseDto(await this.buscarPorId(id, user));
+  }
+
   async update(
     id: number,
     updatePreferenciasUsuarioDto: UpdatePreferenciasUsuarioDto,
     user: AuthUser,
-  ): Promise<PreferenciasUsuario> {
-    const preferencias = await this.findOne(id, user);
+  ): Promise<PreferenciasUsuarioResponseDto> {
+    const preferencias = await this.buscarPorId(id, user);
     const { nutrizId, ...dados } = updatePreferenciasUsuarioDto;
     Object.assign(preferencias, dados);
 
@@ -103,6 +120,8 @@ export class PreferenciasUsuarioService {
       }
       preferencias.nutriz = nutriz;
     }
-    return this.preferenciasRepository.save(preferencias);
+    return toPreferenciasUsuarioResponseDto(
+      await this.preferenciasRepository.save(preferencias),
+    );
   }
 }

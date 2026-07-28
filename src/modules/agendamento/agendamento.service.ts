@@ -17,6 +17,10 @@ import {
 import { CreateAgendamentoDto } from './dto/create-agendamento.dto';
 import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
+import {
+  AgendamentoResponseDto,
+  toAgendamentoResponseDto,
+} from './dto/agendamento-response.dto';
 
 const EXAMES_OBRIGATORIOS = [
   ExameTipo.HEMOGRAMA,
@@ -37,7 +41,7 @@ export class AgendamentoService {
   async create(
     createAgendamentoDto: CreateAgendamentoDto,
     user: AuthUser,
-  ): Promise<Agendamento> {
+  ): Promise<AgendamentoResponseDto> {
     const { nutrizId, bancoId, ...dados } = createAgendamentoDto;
 
     if (user.tipo === 'nutriz' && user.id !== nutrizId) {
@@ -78,18 +82,21 @@ export class AgendamentoService {
       nutriz,
       banco,
     });
-    return this.agendamentoRepository.save(agendamento);
+    return toAgendamentoResponseDto(
+      await this.agendamentoRepository.save(agendamento),
+    );
   }
 
-  findAll(user: AuthUser): Promise<Agendamento[]> {
+  async findAll(user: AuthUser): Promise<AgendamentoResponseDto[]> {
     const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
-    return this.agendamentoRepository.find({
+    const agendamentos = await this.agendamentoRepository.find({
       where,
       relations: { nutriz: true, banco: true },
     });
+    return agendamentos.map(toAgendamentoResponseDto);
   }
 
-  async findOne(id: number, user: AuthUser): Promise<Agendamento> {
+  private async buscarPorId(id: number, user: AuthUser): Promise<Agendamento> {
     const agendamento = await this.agendamentoRepository.findOne({
       where: { id },
       relations: { nutriz: true, banco: true, doacao: true },
@@ -105,12 +112,16 @@ export class AgendamentoService {
     return agendamento;
   }
 
+  async findOne(id: number, user: AuthUser): Promise<AgendamentoResponseDto> {
+    return toAgendamentoResponseDto(await this.buscarPorId(id, user));
+  }
+
   async update(
     id: number,
     updateAgendamentoDto: UpdateAgendamentoDto,
     user: AuthUser,
-  ): Promise<Agendamento> {
-    const agendamento = await this.findOne(id, user);
+  ): Promise<AgendamentoResponseDto> {
+    const agendamento = await this.buscarPorId(id, user);
     const { nutrizId, bancoId, ...dados } = updateAgendamentoDto;
     Object.assign(agendamento, dados);
     if (dados.dataColeta) {
@@ -141,6 +152,8 @@ export class AgendamentoService {
       }
       agendamento.banco = banco;
     }
-    return this.agendamentoRepository.save(agendamento);
+    return toAgendamentoResponseDto(
+      await this.agendamentoRepository.save(agendamento),
+    );
   }
 }

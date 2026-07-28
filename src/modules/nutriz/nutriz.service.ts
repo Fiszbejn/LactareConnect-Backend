@@ -12,6 +12,10 @@ import { PreferenciasUsuario } from '../preferencias-usuario/entities/preferenci
 import { CreateNutrizDto } from './dto/create-nutriz.dto';
 import { UpdateNutrizDto } from './dto/update-nutriz.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
+import {
+  NutrizResponseDto,
+  toNutrizResponseDto,
+} from './dto/nutriz-response.dto';
 
 @Injectable()
 export class NutrizService {
@@ -22,7 +26,7 @@ export class NutrizService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(createNutrizDto: CreateNutrizDto): Promise<Nutriz> {
+  async create(createNutrizDto: CreateNutrizDto): Promise<NutrizResponseDto> {
     const { senha, ...dados } = createNutrizDto;
     const senhaHash = await bcrypt.hash(senha, 10);
 
@@ -46,17 +50,18 @@ export class NutrizService {
       });
       await manager.save(preferencias);
 
-      return nutriz;
+      return toNutrizResponseDto(nutriz);
     });
   }
 
-  findAll(): Promise<Nutriz[]> {
-    return this.nutrizRepository.find({
+  async findAll(): Promise<NutrizResponseDto[]> {
+    const nutrizes = await this.nutrizRepository.find({
       relations: { endereco: true, preferencias: true },
     });
+    return nutrizes.map(toNutrizResponseDto);
   }
 
-  async findOne(id: number, user: AuthUser): Promise<Nutriz> {
+  private async buscarPorId(id: number, user: AuthUser): Promise<Nutriz> {
     const nutriz = await this.nutrizRepository.findOne({
       where: { id },
       relations: { endereco: true, preferencias: true },
@@ -72,22 +77,26 @@ export class NutrizService {
     return nutriz;
   }
 
+  async findOne(id: number, user: AuthUser): Promise<NutrizResponseDto> {
+    return toNutrizResponseDto(await this.buscarPorId(id, user));
+  }
+
   async update(
     id: number,
     updateNutrizDto: UpdateNutrizDto,
     user: AuthUser,
-  ): Promise<Nutriz> {
-    const nutriz = await this.findOne(id, user);
+  ): Promise<NutrizResponseDto> {
+    const nutriz = await this.buscarPorId(id, user);
     const { senha, ...dados } = updateNutrizDto;
     Object.assign(nutriz, dados);
     if (senha) {
       nutriz.senhaHash = await bcrypt.hash(senha, 10);
     }
-    return this.nutrizRepository.save(nutriz);
+    return toNutrizResponseDto(await this.nutrizRepository.save(nutriz));
   }
 
   async remove(id: number, user: AuthUser): Promise<void> {
-    const nutriz = await this.findOne(id, user);
+    const nutriz = await this.buscarPorId(id, user);
     await this.nutrizRepository.remove(nutriz);
   }
 }

@@ -20,6 +20,10 @@ import {
 import { CreateDoacaoDto } from './dto/create-doacao.dto';
 import { UpdateDoacaoDto } from './dto/update-doacao.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
+import {
+  DoacaoResponseDto,
+  toDoacaoResponseDto,
+} from './dto/doacao-response.dto';
 
 const GOTINHAS_POR_DOACAO = 100;
 
@@ -32,7 +36,10 @@ export class DoacaoService {
     private readonly dataSource: DataSource,
   ) {}
 
-  create(createDoacaoDto: CreateDoacaoDto, user: AuthUser): Promise<Doacao> {
+  create(
+    createDoacaoDto: CreateDoacaoDto,
+    user: AuthUser,
+  ): Promise<DoacaoResponseDto> {
     const { nutrizId, agendamentoId, ...dados } = createDoacaoDto;
 
     if (user.tipo === 'nutriz' && user.id !== nutrizId) {
@@ -92,19 +99,20 @@ export class DoacaoService {
       });
       await manager.save(transacao);
 
-      return doacao;
+      return toDoacaoResponseDto(doacao);
     });
   }
 
-  findAll(user: AuthUser): Promise<Doacao[]> {
+  async findAll(user: AuthUser): Promise<DoacaoResponseDto[]> {
     const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
-    return this.doacaoRepository.find({
+    const doacoes = await this.doacaoRepository.find({
       where,
       relations: { nutriz: true, agendamento: true },
     });
+    return doacoes.map(toDoacaoResponseDto);
   }
 
-  async findOne(id: number, user: AuthUser): Promise<Doacao> {
+  private async buscarPorId(id: number, user: AuthUser): Promise<Doacao> {
     const doacao = await this.doacaoRepository.findOne({
       where: { id },
       relations: { nutriz: true, agendamento: true },
@@ -120,12 +128,16 @@ export class DoacaoService {
     return doacao;
   }
 
+  async findOne(id: number, user: AuthUser): Promise<DoacaoResponseDto> {
+    return toDoacaoResponseDto(await this.buscarPorId(id, user));
+  }
+
   async update(
     id: number,
     updateDoacaoDto: UpdateDoacaoDto,
     user: AuthUser,
-  ): Promise<Doacao> {
-    const doacao = await this.findOne(id, user);
+  ): Promise<DoacaoResponseDto> {
+    const doacao = await this.buscarPorId(id, user);
     const { nutrizId, agendamentoId, ...dados } = updateDoacaoDto;
     Object.assign(doacao, dados);
 
@@ -154,6 +166,6 @@ export class DoacaoService {
       }
       doacao.agendamento = agendamento;
     }
-    return this.doacaoRepository.save(doacao);
+    return toDoacaoResponseDto(await this.doacaoRepository.save(doacao));
   }
 }

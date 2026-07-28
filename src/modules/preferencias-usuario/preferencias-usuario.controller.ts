@@ -6,9 +6,15 @@ import {
   ParseIntPipe,
   Patch,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PreferenciasUsuarioService } from './preferencias-usuario.service';
 import { UpdatePreferenciasUsuarioDto } from './dto/update-preferencias-usuario.dto';
+import { PreferenciasUsuarioResponseDto } from './dto/preferencias-usuario-response.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthUser } from '../auth/types/auth-user.type';
 
@@ -24,12 +30,14 @@ export class PreferenciasUsuarioController {
     summary:
       'Listar preferências (nutriz vê só a própria; administrador vê todas)',
   })
+  @ApiOkResponse({ type: PreferenciasUsuarioResponseDto, isArray: true })
   @Get()
   findAll(@CurrentUser() user: AuthUser) {
     return this.preferenciasUsuarioService.findAll(user);
   }
 
   @ApiOperation({ summary: 'Buscar preferências pelo id' })
+  @ApiOkResponse({ type: PreferenciasUsuarioResponseDto })
   @Get(':id')
   findOne(
     @Param('id', ParseIntPipe) id: number,
@@ -39,6 +47,7 @@ export class PreferenciasUsuarioController {
   }
 
   @ApiOperation({ summary: 'Atualizar preferências de uma nutriz' })
+  @ApiOkResponse({ type: PreferenciasUsuarioResponseDto })
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,

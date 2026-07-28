@@ -7,10 +7,17 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ExamePreDoacaoService } from './exame-pre-doacao.service';
 import { CreateExamePreDoacaoDto } from './dto/create-exame-pre-doacao.dto';
 import { UpdateExamePreDoacaoDto } from './dto/update-exame-pre-doacao.dto';
+import { ExamePreDoacaoResponseDto } from './dto/exame-pre-doacao-response.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthUser } from '../auth/types/auth-user.type';
 
@@ -21,6 +28,7 @@ export class ExamePreDoacaoController {
   constructor(private readonly examePreDoacaoService: ExamePreDoacaoService) {}
 
   @ApiOperation({ summary: 'Registrar um exame pré-doação de uma nutriz' })
+  @ApiCreatedResponse({ type: ExamePreDoacaoResponseDto })
   @Post()
   create(
     @Body() createExamePreDoacaoDto: CreateExamePreDoacaoDto,
@@ -33,12 +41,14 @@ export class ExamePreDoacaoController {
     summary:
       'Listar exames pré-doação (nutriz vê só os próprios; administrador vê todos)',
   })
+  @ApiOkResponse({ type: ExamePreDoacaoResponseDto, isArray: true })
   @Get()
   findAll(@CurrentUser() user: AuthUser) {
     return this.examePreDoacaoService.findAll(user);
   }
 
   @ApiOperation({ summary: 'Buscar um exame pré-doação pelo id' })
+  @ApiOkResponse({ type: ExamePreDoacaoResponseDto })
   @Get(':id')
   findOne(
     @Param('id', ParseIntPipe) id: number,
@@ -51,6 +61,7 @@ export class ExamePreDoacaoController {
     summary:
       'Atualizar um exame pré-doação (status só pode virar "ok" com arquivoUrl)',
   })
+  @ApiOkResponse({ type: ExamePreDoacaoResponseDto })
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
