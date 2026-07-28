@@ -227,7 +227,7 @@ Todas as rotas usam DTOs próprios tanto para receber dados (`create-*.dto.ts` /
 <br/>
 
 <p align="center">
-  <img src="docs/assets/eurofarma-logo.png" alt="Eurofarma" height="62" />
+  <img src="docs/assets/eurofarma-logo.png" alt="Eurofarma" height="40" />
   &emsp;&emsp;×&emsp;&emsp;
-  <img src="docs/assets/fiap-logo.png" alt="FIAP" height="38" />
+  <img src="docs/assets/fiap-logo.png" alt="FIAP" height="40" />
 </p>
