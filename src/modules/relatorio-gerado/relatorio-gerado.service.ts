@@ -8,6 +8,10 @@ import { DataSource, Repository } from 'typeorm';
 import { RelatorioGerado } from './entities/relatorio-gerado.entity';
 import { Administrador } from '../administrador/entities/administrador.entity';
 import { CreateRelatorioGeradoDto } from './dto/create-relatorio-gerado.dto';
+import {
+  RelatorioGeradoResponseDto,
+  toRelatorioGeradoResponseDto,
+} from './dto/relatorio-gerado-response.dto';
 
 @Injectable()
 export class RelatorioGeradoService {
@@ -20,7 +24,7 @@ export class RelatorioGeradoService {
 
   async create(
     createRelatorioDto: CreateRelatorioGeradoDto,
-  ): Promise<RelatorioGerado> {
+  ): Promise<RelatorioGeradoResponseDto> {
     const { administradorId, ...dados } = createRelatorioDto;
 
     const administrador = await this.dataSource
@@ -46,16 +50,19 @@ export class RelatorioGeradoService {
       periodoFim,
       administrador,
     });
-    return this.relatorioRepository.save(relatorio);
+    return toRelatorioGeradoResponseDto(
+      await this.relatorioRepository.save(relatorio),
+    );
   }
 
-  findAll(): Promise<RelatorioGerado[]> {
-    return this.relatorioRepository.find({
+  async findAll(): Promise<RelatorioGeradoResponseDto[]> {
+    const relatorios = await this.relatorioRepository.find({
       relations: { administrador: true },
     });
+    return relatorios.map(toRelatorioGeradoResponseDto);
   }
 
-  async findOne(id: number): Promise<RelatorioGerado> {
+  private async buscarPorId(id: number): Promise<RelatorioGerado> {
     const relatorio = await this.relatorioRepository.findOne({
       where: { id },
       relations: { administrador: true },
@@ -66,8 +73,12 @@ export class RelatorioGeradoService {
     return relatorio;
   }
 
+  async findOne(id: number): Promise<RelatorioGeradoResponseDto> {
+    return toRelatorioGeradoResponseDto(await this.buscarPorId(id));
+  }
+
   async remove(id: number): Promise<void> {
-    const relatorio = await this.findOne(id);
+    const relatorio = await this.buscarPorId(id);
     await this.relatorioRepository.remove(relatorio);
   }
 }

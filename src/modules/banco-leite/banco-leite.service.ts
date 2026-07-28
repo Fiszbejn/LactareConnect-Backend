@@ -4,6 +4,10 @@ import { Repository } from 'typeorm';
 import { BancoLeiteLactare } from './entities/banco-leite.entity';
 import { CreateBancoLeiteDto } from './dto/create-banco-leite.dto';
 import { UpdateBancoLeiteDto } from './dto/update-banco-leite.dto';
+import {
+  BancoLeiteResponseDto,
+  toBancoLeiteResponseDto,
+} from './dto/banco-leite-response.dto';
 
 @Injectable()
 export class BancoLeiteService {
@@ -12,16 +16,7 @@ export class BancoLeiteService {
     private readonly bancoLeiteRepository: Repository<BancoLeiteLactare>,
   ) {}
 
-  create(createBancoLeiteDto: CreateBancoLeiteDto): Promise<BancoLeiteLactare> {
-    const banco = this.bancoLeiteRepository.create(createBancoLeiteDto);
-    return this.bancoLeiteRepository.save(banco);
-  }
-
-  findAll(): Promise<BancoLeiteLactare[]> {
-    return this.bancoLeiteRepository.find();
-  }
-
-  async findOne(id: number): Promise<BancoLeiteLactare> {
+  private async buscarPorId(id: number): Promise<BancoLeiteLactare> {
     const banco = await this.bancoLeiteRepository.findOne({ where: { id } });
     if (!banco) {
       throw new NotFoundException(`Banco de leite #${id} não encontrado`);
@@ -29,17 +24,33 @@ export class BancoLeiteService {
     return banco;
   }
 
+  async create(
+    createBancoLeiteDto: CreateBancoLeiteDto,
+  ): Promise<BancoLeiteResponseDto> {
+    const banco = this.bancoLeiteRepository.create(createBancoLeiteDto);
+    return toBancoLeiteResponseDto(await this.bancoLeiteRepository.save(banco));
+  }
+
+  async findAll(): Promise<BancoLeiteResponseDto[]> {
+    const bancos = await this.bancoLeiteRepository.find();
+    return bancos.map(toBancoLeiteResponseDto);
+  }
+
+  async findOne(id: number): Promise<BancoLeiteResponseDto> {
+    return toBancoLeiteResponseDto(await this.buscarPorId(id));
+  }
+
   async update(
     id: number,
     updateBancoLeiteDto: UpdateBancoLeiteDto,
-  ): Promise<BancoLeiteLactare> {
-    const banco = await this.findOne(id);
+  ): Promise<BancoLeiteResponseDto> {
+    const banco = await this.buscarPorId(id);
     Object.assign(banco, updateBancoLeiteDto);
-    return this.bancoLeiteRepository.save(banco);
+    return toBancoLeiteResponseDto(await this.bancoLeiteRepository.save(banco));
   }
 
   async remove(id: number): Promise<void> {
-    const banco = await this.findOne(id);
+    const banco = await this.buscarPorId(id);
     await this.bancoLeiteRepository.remove(banco);
   }
 }

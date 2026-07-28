@@ -10,6 +10,10 @@ import { Administrador } from './entities/administrador.entity';
 import { BancoLeiteLactare } from '../banco-leite/entities/banco-leite.entity';
 import { CreateAdministradorDto } from './dto/create-administrador.dto';
 import { UpdateAdministradorDto } from './dto/update-administrador.dto';
+import {
+  AdministradorResponseDto,
+  toAdministradorResponseDto,
+} from './dto/administrador-response.dto';
 
 @Injectable()
 export class AdministradorService {
@@ -22,7 +26,7 @@ export class AdministradorService {
 
   async create(
     createAdministradorDto: CreateAdministradorDto,
-  ): Promise<Administrador> {
+  ): Promise<AdministradorResponseDto> {
     const { senha, bancoVinculadoId, ...dados } = createAdministradorDto;
 
     const existente = await this.administradorRepository.findOneBy({
@@ -53,16 +57,19 @@ export class AdministradorService {
       senhaHash,
       bancoVinculado,
     });
-    return this.administradorRepository.save(administrador);
+    return toAdministradorResponseDto(
+      await this.administradorRepository.save(administrador),
+    );
   }
 
-  findAll(): Promise<Administrador[]> {
-    return this.administradorRepository.find({
+  async findAll(): Promise<AdministradorResponseDto[]> {
+    const administradores = await this.administradorRepository.find({
       relations: { bancoVinculado: true },
     });
+    return administradores.map(toAdministradorResponseDto);
   }
 
-  async findOne(id: number): Promise<Administrador> {
+  private async buscarPorId(id: number): Promise<Administrador> {
     const administrador = await this.administradorRepository.findOne({
       where: { id },
       relations: { bancoVinculado: true },
@@ -73,11 +80,15 @@ export class AdministradorService {
     return administrador;
   }
 
+  async findOne(id: number): Promise<AdministradorResponseDto> {
+    return toAdministradorResponseDto(await this.buscarPorId(id));
+  }
+
   async update(
     id: number,
     updateAdministradorDto: UpdateAdministradorDto,
-  ): Promise<Administrador> {
-    const administrador = await this.findOne(id);
+  ): Promise<AdministradorResponseDto> {
+    const administrador = await this.buscarPorId(id);
     const { senha, bancoVinculadoId, ...dados } = updateAdministradorDto;
     Object.assign(administrador, dados);
     if (senha) {
@@ -94,11 +105,13 @@ export class AdministradorService {
       }
       administrador.bancoVinculado = banco;
     }
-    return this.administradorRepository.save(administrador);
+    return toAdministradorResponseDto(
+      await this.administradorRepository.save(administrador),
+    );
   }
 
   async remove(id: number): Promise<void> {
-    const administrador = await this.findOne(id);
+    const administrador = await this.buscarPorId(id);
     await this.administradorRepository.remove(administrador);
   }
 }

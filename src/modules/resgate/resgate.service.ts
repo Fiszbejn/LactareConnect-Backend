@@ -16,6 +16,10 @@ import {
 import { CreateResgateDto } from './dto/create-resgate.dto';
 import { UpdateResgateDto } from './dto/update-resgate.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
+import {
+  ResgateResponseDto,
+  toResgateResponseDto,
+} from './dto/resgate-response.dto';
 
 @Injectable()
 export class ResgateService {
@@ -26,7 +30,10 @@ export class ResgateService {
     private readonly dataSource: DataSource,
   ) {}
 
-  create(createResgateDto: CreateResgateDto, user: AuthUser): Promise<Resgate> {
+  create(
+    createResgateDto: CreateResgateDto,
+    user: AuthUser,
+  ): Promise<ResgateResponseDto> {
     const { nutrizId, recompensaId, ...dados } = createResgateDto;
 
     if (user.tipo === 'nutriz' && user.id !== nutrizId) {
@@ -86,19 +93,20 @@ export class ResgateService {
       });
       await manager.save(transacao);
 
-      return resgate;
+      return toResgateResponseDto(resgate);
     });
   }
 
-  findAll(user: AuthUser): Promise<Resgate[]> {
+  async findAll(user: AuthUser): Promise<ResgateResponseDto[]> {
     const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
-    return this.resgateRepository.find({
+    const resgates = await this.resgateRepository.find({
       where,
       relations: { nutriz: true, recompensa: true },
     });
+    return resgates.map(toResgateResponseDto);
   }
 
-  async findOne(id: number, user: AuthUser): Promise<Resgate> {
+  private async buscarPorId(id: number, user: AuthUser): Promise<Resgate> {
     const resgate = await this.resgateRepository.findOne({
       where: { id },
       relations: { nutriz: true, recompensa: true },
@@ -114,12 +122,16 @@ export class ResgateService {
     return resgate;
   }
 
+  async findOne(id: number, user: AuthUser): Promise<ResgateResponseDto> {
+    return toResgateResponseDto(await this.buscarPorId(id, user));
+  }
+
   async update(
     id: number,
     updateResgateDto: UpdateResgateDto,
     user: AuthUser,
-  ): Promise<Resgate> {
-    const resgate = await this.findOne(id, user);
+  ): Promise<ResgateResponseDto> {
+    const resgate = await this.buscarPorId(id, user);
     const { nutrizId, recompensaId, ...dados } = updateResgateDto;
     Object.assign(resgate, dados);
 
@@ -148,6 +160,6 @@ export class ResgateService {
       }
       resgate.recompensa = recompensa;
     }
-    return this.resgateRepository.save(resgate);
+    return toResgateResponseDto(await this.resgateRepository.save(resgate));
   }
 }

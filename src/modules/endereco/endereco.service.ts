@@ -11,6 +11,10 @@ import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreateEnderecoDto } from './dto/create-endereco.dto';
 import { UpdateEnderecoDto } from './dto/update-endereco.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
+import {
+  EnderecoResponseDto,
+  toEnderecoResponseDto,
+} from './dto/endereco-response.dto';
 
 @Injectable()
 export class EnderecoService {
@@ -24,7 +28,7 @@ export class EnderecoService {
   async create(
     createEnderecoDto: CreateEnderecoDto,
     user: AuthUser,
-  ): Promise<Endereco> {
+  ): Promise<EnderecoResponseDto> {
     const { nutrizId, ...dados } = createEnderecoDto;
 
     if (user.tipo === 'nutriz' && user.id !== nutrizId) {
@@ -49,15 +53,19 @@ export class EnderecoService {
     }
 
     const endereco = this.enderecoRepository.create({ ...dados, nutriz });
-    return this.enderecoRepository.save(endereco);
+    return toEnderecoResponseDto(await this.enderecoRepository.save(endereco));
   }
 
-  findAll(user: AuthUser): Promise<Endereco[]> {
+  async findAll(user: AuthUser): Promise<EnderecoResponseDto[]> {
     const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
-    return this.enderecoRepository.find({ where, relations: { nutriz: true } });
+    const enderecos = await this.enderecoRepository.find({
+      where,
+      relations: { nutriz: true },
+    });
+    return enderecos.map(toEnderecoResponseDto);
   }
 
-  async findOne(id: number, user: AuthUser): Promise<Endereco> {
+  private async buscarPorId(id: number, user: AuthUser): Promise<Endereco> {
     const endereco = await this.enderecoRepository.findOne({
       where: { id },
       relations: { nutriz: true },
@@ -73,12 +81,16 @@ export class EnderecoService {
     return endereco;
   }
 
+  async findOne(id: number, user: AuthUser): Promise<EnderecoResponseDto> {
+    return toEnderecoResponseDto(await this.buscarPorId(id, user));
+  }
+
   async update(
     id: number,
     updateEnderecoDto: UpdateEnderecoDto,
     user: AuthUser,
-  ): Promise<Endereco> {
-    const endereco = await this.findOne(id, user);
+  ): Promise<EnderecoResponseDto> {
+    const endereco = await this.buscarPorId(id, user);
     const { nutrizId, ...dados } = updateEnderecoDto;
     Object.assign(endereco, dados);
 
@@ -104,11 +116,11 @@ export class EnderecoService {
       }
       endereco.nutriz = nutriz;
     }
-    return this.enderecoRepository.save(endereco);
+    return toEnderecoResponseDto(await this.enderecoRepository.save(endereco));
   }
 
   async remove(id: number, user: AuthUser): Promise<void> {
-    const endereco = await this.findOne(id, user);
+    const endereco = await this.buscarPorId(id, user);
     await this.enderecoRepository.remove(endereco);
   }
 }

@@ -4,6 +4,10 @@ import { Repository } from 'typeorm';
 import { Recompensa } from './entities/recompensa.entity';
 import { CreateRecompensaDto } from './dto/create-recompensa.dto';
 import { UpdateRecompensaDto } from './dto/update-recompensa.dto';
+import {
+  RecompensaResponseDto,
+  toRecompensaResponseDto,
+} from './dto/recompensa-response.dto';
 
 @Injectable()
 export class RecompensaService {
@@ -12,16 +16,7 @@ export class RecompensaService {
     private readonly recompensaRepository: Repository<Recompensa>,
   ) {}
 
-  create(createRecompensaDto: CreateRecompensaDto): Promise<Recompensa> {
-    const recompensa = this.recompensaRepository.create(createRecompensaDto);
-    return this.recompensaRepository.save(recompensa);
-  }
-
-  findAll(): Promise<Recompensa[]> {
-    return this.recompensaRepository.find();
-  }
-
-  async findOne(id: number): Promise<Recompensa> {
+  private async buscarPorId(id: number): Promise<Recompensa> {
     const recompensa = await this.recompensaRepository.findOne({
       where: { id },
     });
@@ -31,17 +26,37 @@ export class RecompensaService {
     return recompensa;
   }
 
+  async create(
+    createRecompensaDto: CreateRecompensaDto,
+  ): Promise<RecompensaResponseDto> {
+    const recompensa = this.recompensaRepository.create(createRecompensaDto);
+    return toRecompensaResponseDto(
+      await this.recompensaRepository.save(recompensa),
+    );
+  }
+
+  async findAll(): Promise<RecompensaResponseDto[]> {
+    const recompensas = await this.recompensaRepository.find();
+    return recompensas.map(toRecompensaResponseDto);
+  }
+
+  async findOne(id: number): Promise<RecompensaResponseDto> {
+    return toRecompensaResponseDto(await this.buscarPorId(id));
+  }
+
   async update(
     id: number,
     updateRecompensaDto: UpdateRecompensaDto,
-  ): Promise<Recompensa> {
-    const recompensa = await this.findOne(id);
+  ): Promise<RecompensaResponseDto> {
+    const recompensa = await this.buscarPorId(id);
     Object.assign(recompensa, updateRecompensaDto);
-    return this.recompensaRepository.save(recompensa);
+    return toRecompensaResponseDto(
+      await this.recompensaRepository.save(recompensa),
+    );
   }
 
   async remove(id: number): Promise<void> {
-    const recompensa = await this.findOne(id);
+    const recompensa = await this.buscarPorId(id);
     await this.recompensaRepository.remove(recompensa);
   }
 }

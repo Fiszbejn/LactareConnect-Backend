@@ -8,6 +8,10 @@ import { DataSource, Repository } from 'typeorm';
 import { Mensagem } from './entities/mensagem.entity';
 import { Conversa, ConversaStatus } from '../conversa/entities/conversa.entity';
 import { CreateMensagemDto } from './dto/create-mensagem.dto';
+import {
+  MensagemResponseDto,
+  toMensagemResponseDto,
+} from './dto/mensagem-response.dto';
 
 @Injectable()
 export class MensagemService {
@@ -18,7 +22,9 @@ export class MensagemService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(createMensagemDto: CreateMensagemDto): Promise<Mensagem> {
+  async create(
+    createMensagemDto: CreateMensagemDto,
+  ): Promise<MensagemResponseDto> {
     const { conversaId, ...dados } = createMensagemDto;
 
     const conversa = await this.dataSource
@@ -34,21 +40,26 @@ export class MensagemService {
     }
 
     const mensagem = this.mensagemRepository.create({ ...dados, conversa });
-    return this.mensagemRepository.save(mensagem);
+    return toMensagemResponseDto(await this.mensagemRepository.save(mensagem));
   }
 
-  findAll(): Promise<Mensagem[]> {
-    return this.mensagemRepository.find({ relations: { conversa: true } });
+  async findAll(): Promise<MensagemResponseDto[]> {
+    const mensagens = await this.mensagemRepository.find({
+      relations: { conversa: true },
+    });
+    return mensagens.map(toMensagemResponseDto);
   }
 
-  findByConversa(conversaId: number): Promise<Mensagem[]> {
-    return this.mensagemRepository.find({
+  async findByConversa(conversaId: number): Promise<MensagemResponseDto[]> {
+    const mensagens = await this.mensagemRepository.find({
       where: { conversa: { id: conversaId } },
+      relations: { conversa: true },
       order: { timestamp: 'ASC' },
     });
+    return mensagens.map(toMensagemResponseDto);
   }
 
-  async findOne(id: number): Promise<Mensagem> {
+  async findOne(id: number): Promise<MensagemResponseDto> {
     const mensagem = await this.mensagemRepository.findOne({
       where: { id },
       relations: { conversa: true },
@@ -56,6 +67,6 @@ export class MensagemService {
     if (!mensagem) {
       throw new NotFoundException(`Mensagem #${id} não encontrada`);
     }
-    return mensagem;
+    return toMensagemResponseDto(mensagem);
   }
 }

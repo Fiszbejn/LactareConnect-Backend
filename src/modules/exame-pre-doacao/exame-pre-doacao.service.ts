@@ -14,6 +14,10 @@ import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreateExamePreDoacaoDto } from './dto/create-exame-pre-doacao.dto';
 import { UpdateExamePreDoacaoDto } from './dto/update-exame-pre-doacao.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
+import {
+  ExamePreDoacaoResponseDto,
+  toExamePreDoacaoResponseDto,
+} from './dto/exame-pre-doacao-response.dto';
 
 @Injectable()
 export class ExamePreDoacaoService {
@@ -27,7 +31,7 @@ export class ExamePreDoacaoService {
   async create(
     createExameDto: CreateExamePreDoacaoDto,
     user: AuthUser,
-  ): Promise<ExamePreDoacao> {
+  ): Promise<ExamePreDoacaoResponseDto> {
     const { nutrizId, ...dados } = createExameDto;
 
     if (user.tipo === 'nutriz' && user.id !== nutrizId) {
@@ -49,15 +53,22 @@ export class ExamePreDoacaoService {
     }
 
     const exame = this.exameRepository.create({ ...dados, nutriz });
-    return this.exameRepository.save(exame);
+    return toExamePreDoacaoResponseDto(await this.exameRepository.save(exame));
   }
 
-  findAll(user: AuthUser): Promise<ExamePreDoacao[]> {
+  async findAll(user: AuthUser): Promise<ExamePreDoacaoResponseDto[]> {
     const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
-    return this.exameRepository.find({ where, relations: { nutriz: true } });
+    const exames = await this.exameRepository.find({
+      where,
+      relations: { nutriz: true },
+    });
+    return exames.map(toExamePreDoacaoResponseDto);
   }
 
-  async findOne(id: number, user: AuthUser): Promise<ExamePreDoacao> {
+  private async buscarPorId(
+    id: number,
+    user: AuthUser,
+  ): Promise<ExamePreDoacao> {
     const exame = await this.exameRepository.findOne({
       where: { id },
       relations: { nutriz: true },
@@ -73,12 +84,19 @@ export class ExamePreDoacaoService {
     return exame;
   }
 
+  async findOne(
+    id: number,
+    user: AuthUser,
+  ): Promise<ExamePreDoacaoResponseDto> {
+    return toExamePreDoacaoResponseDto(await this.buscarPorId(id, user));
+  }
+
   async update(
     id: number,
     updateExameDto: UpdateExamePreDoacaoDto,
     user: AuthUser,
-  ): Promise<ExamePreDoacao> {
-    const exame = await this.findOne(id, user);
+  ): Promise<ExamePreDoacaoResponseDto> {
+    const exame = await this.buscarPorId(id, user);
     const { nutrizId, ...dados } = updateExameDto;
     Object.assign(exame, dados);
 
@@ -102,6 +120,6 @@ export class ExamePreDoacaoService {
       }
       exame.nutriz = nutriz;
     }
-    return this.exameRepository.save(exame);
+    return toExamePreDoacaoResponseDto(await this.exameRepository.save(exame));
   }
 }

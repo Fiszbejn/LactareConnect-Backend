@@ -4,6 +4,10 @@ import { Repository } from 'typeorm';
 import { TransacaoGotinhas } from './entities/transacao-gotinhas.entity';
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
 import { CreateTransacaoGotinhasDto } from './dto/create-transacao-gotinhas.dto';
+import {
+  TransacaoGotinhasResponseDto,
+  toTransacaoGotinhasResponseDto,
+} from './dto/transacao-gotinhas-response.dto';
 
 @Injectable()
 export class TransacaoGotinhasService {
@@ -13,22 +17,27 @@ export class TransacaoGotinhasService {
   ) {}
 
   /** Sem rota HTTP própria — chamado internamente pelos services de Doacao/Resgate para creditar/debitar gotinhas. */
-  create(
+  async create(
     createTransacaoDto: CreateTransacaoGotinhasDto,
-  ): Promise<TransacaoGotinhas> {
+  ): Promise<TransacaoGotinhasResponseDto> {
     const { nutrizId, ...dados } = createTransacaoDto;
     const transacao = this.transacaoRepository.create({
       ...dados,
       nutriz: { id: nutrizId } as Nutriz,
     });
-    return this.transacaoRepository.save(transacao);
+    return toTransacaoGotinhasResponseDto(
+      await this.transacaoRepository.save(transacao),
+    );
   }
 
-  findAll(): Promise<TransacaoGotinhas[]> {
-    return this.transacaoRepository.find({ relations: { nutriz: true } });
+  async findAll(): Promise<TransacaoGotinhasResponseDto[]> {
+    const transacoes = await this.transacaoRepository.find({
+      relations: { nutriz: true },
+    });
+    return transacoes.map(toTransacaoGotinhasResponseDto);
   }
 
-  async findOne(id: number): Promise<TransacaoGotinhas> {
+  async findOne(id: number): Promise<TransacaoGotinhasResponseDto> {
     const transacao = await this.transacaoRepository.findOne({
       where: { id },
       relations: { nutriz: true },
@@ -38,6 +47,6 @@ export class TransacaoGotinhasService {
         `Transação de gotinhas #${id} não encontrada`,
       );
     }
-    return transacao;
+    return toTransacaoGotinhasResponseDto(transacao);
   }
 }
