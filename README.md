@@ -220,3 +220,11 @@ O mesmo padrão vale para as demais entidades que dependem de um `nutrizId`, `ba
 ## Estruturas de entrada e saída
 
 Todas as rotas usam DTOs próprios tanto para receber dados (`create-*.dto.ts` / `update-*.dto.ts`, com validação via `class-validator`) quanto para devolver respostas (`*-response.dto.ts`). As entidades persistidas (TypeORM) nunca são expostas diretamente na API — os DTOs de resposta selecionam apenas os campos relevantes (nunca dados sensíveis, como hash de senha) e representam relacionamentos como o id do registro relacionado (ex: `nutrizId`), em vez de objetos aninhados.
+
+---
+
+<p align="center">
+  <img src="docs/assets/eurofarma-logo.png" alt="Eurofarma" height="50" />
+  &nbsp;&nbsp;&nbsp;×&nbsp;&nbsp;&nbsp;
+  <img src="docs/assets/fiap-logo.png" alt="FIAP" height="50" />
+</p>
