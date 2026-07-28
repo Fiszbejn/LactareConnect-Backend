@@ -29,13 +29,15 @@ export class AdministradorService implements OnModuleInit {
   ) {}
 
   /**
-   * Garante que exista pelo menos um administrador no banco. Sem isso não
-   * haveria como fazer o primeiro login administrativo em um banco vazio,
-   * já que cadastrar administrador exige token de administrador.
+   * Garante que o administrador fixo de bootstrap exista no banco. Sem isso
+   * não haveria como fazer o primeiro login administrativo em um banco
+   * vazio, já que cadastrar administrador exige token de administrador.
    */
   async onModuleInit(): Promise<void> {
-    const totalAdministradores = await this.administradorRepository.count();
-    if (totalAdministradores > 0) {
+    const jaExiste = await this.administradorRepository.findOneBy({
+      email: SEED_ADMIN_EMAIL,
+    });
+    if (jaExiste) {
       return;
     }
 
