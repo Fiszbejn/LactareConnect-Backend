@@ -12,6 +12,7 @@ import { PreferenciasUsuario } from '../preferencias-usuario/entities/preferenci
 import { CreateNutrizDto } from './dto/create-nutriz.dto';
 import { UpdateNutrizDto } from './dto/update-nutriz.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
+import { lancarConflitoSeViolarChaveEstrangeira } from '../../common/oracle-fk-constraint.util';
 import {
   NutrizResponseDto,
   toNutrizResponseDto,
@@ -97,6 +98,13 @@ export class NutrizService {
 
   async remove(id: number, user: AuthUser): Promise<void> {
     const nutriz = await this.buscarPorId(id, user);
-    await this.nutrizRepository.remove(nutriz);
+    try {
+      await this.nutrizRepository.remove(nutriz);
+    } catch (error) {
+      lancarConflitoSeViolarChaveEstrangeira(
+        error,
+        `Não é possível remover a nutriz #${id} pois existem registros vinculados a ela (exames, agendamentos, doações, etc.).`,
+      );
+    }
   }
 }
