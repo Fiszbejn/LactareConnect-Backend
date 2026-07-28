@@ -1,7 +1,9 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -15,14 +17,46 @@ import {
   toAdministradorResponseDto,
 } from './dto/administrador-response.dto';
 
+const SEED_ADMIN_NOME = 'Administrador Inicial';
+const SEED_ADMIN_EMAIL = 'admin@lactareconnect.com';
+const SEED_ADMIN_SENHA = 'admin123';
+
 @Injectable()
-export class AdministradorService {
+export class AdministradorService implements OnModuleInit {
+  private readonly logger = new Logger(AdministradorService.name);
+
   constructor(
     @InjectRepository(Administrador)
     private readonly administradorRepository: Repository<Administrador>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
+
+  /**
+   * Garante que o administrador fixo de bootstrap exista no banco. Sem isso
+   * não haveria como fazer o primeiro login administrativo em um banco
+   * vazio, já que cadastrar administrador exige token de administrador.
+   */
+  async onModuleInit(): Promise<void> {
+    const jaExiste = await this.administradorRepository.findOneBy({
+      email: SEED_ADMIN_EMAIL,
+    });
+    if (jaExiste) {
+      return;
+    }
+
+    const senhaHash = await bcrypt.hash(SEED_ADMIN_SENHA, 10);
+    const administrador = this.administradorRepository.create({
+      nome: SEED_ADMIN_NOME,
+      email: SEED_ADMIN_EMAIL,
+      senhaHash,
+      papel: 'administrador',
+    });
+    await this.administradorRepository.save(administrador);
+    this.logger.log(
+      `Administrador inicial criado automaticamente: ${SEED_ADMIN_EMAIL}`,
+    );
+  }
 
   async create(
     createAdministradorDto: CreateAdministradorDto,
