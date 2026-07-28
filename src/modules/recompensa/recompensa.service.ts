@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Recompensa } from './entities/recompensa.entity';
 import { CreateRecompensaDto } from './dto/create-recompensa.dto';
 import { UpdateRecompensaDto } from './dto/update-recompensa.dto';
+import { lancarConflitoSeViolarChaveEstrangeira } from '../../common/oracle-fk-constraint.util';
 import {
   RecompensaResponseDto,
   toRecompensaResponseDto,
@@ -57,6 +58,13 @@ export class RecompensaService {
 
   async remove(id: number): Promise<void> {
     const recompensa = await this.buscarPorId(id);
-    await this.recompensaRepository.remove(recompensa);
+    try {
+      await this.recompensaRepository.remove(recompensa);
+    } catch (error) {
+      lancarConflitoSeViolarChaveEstrangeira(
+        error,
+        `Não é possível remover a recompensa #${id} pois existem resgates vinculados a ela.`,
+      );
+    }
   }
 }

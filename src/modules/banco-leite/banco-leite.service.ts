@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { BancoLeiteLactare } from './entities/banco-leite.entity';
 import { CreateBancoLeiteDto } from './dto/create-banco-leite.dto';
 import { UpdateBancoLeiteDto } from './dto/update-banco-leite.dto';
+import { lancarConflitoSeViolarChaveEstrangeira } from '../../common/oracle-fk-constraint.util';
 import {
   BancoLeiteResponseDto,
   toBancoLeiteResponseDto,
@@ -51,6 +52,13 @@ export class BancoLeiteService {
 
   async remove(id: number): Promise<void> {
     const banco = await this.buscarPorId(id);
-    await this.bancoLeiteRepository.remove(banco);
+    try {
+      await this.bancoLeiteRepository.remove(banco);
+    } catch (error) {
+      lancarConflitoSeViolarChaveEstrangeira(
+        error,
+        `Não é possível remover o banco de leite #${id} pois existem agendamentos ou administradores vinculados a ele.`,
+      );
+    }
   }
 }

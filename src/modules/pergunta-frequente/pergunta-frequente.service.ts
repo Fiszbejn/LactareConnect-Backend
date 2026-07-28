@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { PerguntaFrequente } from './entities/pergunta-frequente.entity';
 import { CreatePerguntaFrequenteDto } from './dto/create-pergunta-frequente.dto';
 import { UpdatePerguntaFrequenteDto } from './dto/update-pergunta-frequente.dto';
+import { lancarConflitoSeViolarChaveEstrangeira } from '../../common/oracle-fk-constraint.util';
 import {
   PerguntaFrequenteResponseDto,
   toPerguntaFrequenteResponseDto,
@@ -57,6 +58,13 @@ export class PerguntaFrequenteService {
 
   async remove(id: number): Promise<void> {
     const pergunta = await this.buscarPorId(id);
-    await this.perguntaRepository.remove(pergunta);
+    try {
+      await this.perguntaRepository.remove(pergunta);
+    } catch (error) {
+      lancarConflitoSeViolarChaveEstrangeira(
+        error,
+        `Não é possível remover a pergunta frequente #${id} pois existem feedbacks vinculados a ela.`,
+      );
+    }
   }
 }

@@ -12,6 +12,7 @@ import { Administrador } from './entities/administrador.entity';
 import { BancoLeiteLactare } from '../banco-leite/entities/banco-leite.entity';
 import { CreateAdministradorDto } from './dto/create-administrador.dto';
 import { UpdateAdministradorDto } from './dto/update-administrador.dto';
+import { lancarConflitoSeViolarChaveEstrangeira } from '../../common/oracle-fk-constraint.util';
 import {
   AdministradorResponseDto,
   toAdministradorResponseDto,
@@ -146,6 +147,13 @@ export class AdministradorService implements OnModuleInit {
 
   async remove(id: number): Promise<void> {
     const administrador = await this.buscarPorId(id);
-    await this.administradorRepository.remove(administrador);
+    try {
+      await this.administradorRepository.remove(administrador);
+    } catch (error) {
+      lancarConflitoSeViolarChaveEstrangeira(
+        error,
+        `Não é possível remover o administrador #${id} pois existem relatórios gerados vinculados a ele.`,
+      );
+    }
   }
 }
