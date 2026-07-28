@@ -98,7 +98,7 @@ A API usa login por e-mail/senha com token JWT (`POST /v1/auth/login`), com trê
 
 O cadastro de uma nova nutriz (`POST /v1/nutrizes`) é a única rota totalmente pública, pois é o ponto de entrada de um novo usuário no sistema.
 
-> **Conta de administrador de teste:** o schema Oracle usado neste projeto já possui um administrador cadastrado (`dev@lactareconnect.com` / `admin123`), criado durante o desenvolvimento e mantido intencionalmente no banco para permitir o teste imediato das rotas administrativas. Não é necessário (nem possível pela API) criar um administrador "do zero", já que a criação de administradores exige um token de administrador — use essa conta para obter o primeiro token.
+> **Administrador inicial:** como cadastrar um administrador exige um token de administrador, não haveria como criar o primeiro administrador pela API em um banco vazio. Por isso, a aplicação garante automaticamente, a cada inicialização, que exista um administrador fixo — se ele ainda não existir, é criado (`email: admin@lactareconnect.com`, `senha: admin123`). Use essa conta para obter o primeiro token administrativo; a partir dela é possível cadastrar os demais administradores normalmente via `POST /v1/administradores`.
 
 ## Exemplos de uso
 
@@ -109,7 +109,7 @@ Fluxo sugerido para testar a API do zero (todos os exemplos abaixo usam `curl`, 
 ```bash
 curl -X POST http://localhost:3000/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"dev@lactareconnect.com","senha":"admin123","tipo":"administrador"}'
+  -d '{"email":"admin@lactareconnect.com","senha":"admin123","tipo":"administrador"}'
 ```
 
 A resposta traz `accessToken`. Use-o no cabeçalho `Authorization: Bearer <accessToken>` nas próximas chamadas.
