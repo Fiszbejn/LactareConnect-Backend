@@ -1,8 +1,26 @@
-# LactareConnect — API Backend
+<div align="center">
 
-API REST do **LactareConnect**, plataforma que conecta nutrizes doadoras a bancos de leite humano. A solução cobre todo o fluxo de doação (exames pré-doação, agendamento de coleta e registro da doação), um sistema de recompensas em "Gotinhas" (moeda virtual ganha ao doar, trocável por prêmios), suporte via chatbot ("Lila") e um painel administrativo interno (campanhas, relatórios).
+# 🤱 LactareConnect
 
-Projeto desenvolvido para a Sprint 3 da FIAP, implementando a solução definida nas Sprints 1 e 2.
+**Backend da solução LactareConnect**
+
+Plataforma que conecta nutrizes doadoras a bancos de leite humano, desenvolvida como entrega do **Challenge FIAP em parceria com a Eurofarma**.
+
+[![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?style=flat&logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Oracle Database](https://img.shields.io/badge/Database-Oracle-F80000?style=flat&logo=oracle&logoColor=white)](https://www.oracle.com/database/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Swagger](https://img.shields.io/badge/API%20Docs-Swagger-85EA2D?style=flat&logo=swagger&logoColor=black)](http://localhost:3000/docs)
+
+</div>
+
+---
+
+## Sobre o projeto
+
+O **LactareConnect** conecta nutrizes doadoras a bancos de leite humano, cobrindo todo o fluxo de doação: exames pré-doação, agendamento de coleta e registro da doação. A plataforma também conta com um sistema de recompensas em **"Gotinhas"** (moeda virtual ganha ao doar, trocável por prêmios), suporte via chatbot (**"Lila"**) e um painel administrativo interno (campanhas, relatórios).
+
+Este repositório contém o **backend** da solução: uma API REST em NestJS + TypeScript, com persistência em Oracle.
 
 ## Stack
 
@@ -17,7 +35,7 @@ Projeto desenvolvido para a Sprint 3 da FIAP, implementando a solução definida
 ## Pré-requisitos
 
 - [Docker](https://www.docker.com/) e Docker Compose instalados
-- Acesso a um banco Oracle (host, porta, SID, usuário e senha) — não incluso no repositório
+- Acesso a um banco Oracle (host, porta, SID, usuário e senha) — pode usar suas próprias credenciais ou as credenciais de desenvolvimento já fornecidas neste README
 
 Não é necessário ter Node.js, npm ou Oracle Instant Client instalados localmente: tudo roda dentro do container.
 
@@ -29,7 +47,9 @@ Não é necessário ter Node.js, npm ou Oracle Instant Client instalados localme
    cp .env.example .env
    ```
 
-2. Preencha o `.env` com suas próprias credenciais Oracle e um segredo de JWT:
+2. Preencha o `.env`. Duas opções:
+
+   **Opção A — usar suas próprias credenciais Oracle:**
 
    ```dotenv
    APP_PORT=3000
@@ -42,6 +62,23 @@ Não é necessário ter Node.js, npm ou Oracle Instant Client instalados localme
    DB_SID=seu-sid
    DB_USER=seu-usuario
    DB_PASSWORD=sua-senha
+   DB_SYNCHRONIZE=true
+   DB_LOGGING=false
+   ```
+
+   **Opção B — usar o mesmo Oracle utilizado no desenvolvimento** (ambiente de treinamento da FIAP, sem dados sensíveis reais — use estas credenciais se não quiser configurar um Oracle próprio):
+
+   ```dotenv
+   APP_PORT=3000
+
+   JWT_SECRET=lactareconnect-dev-secret-fiap-2026
+   JWT_EXPIRES_IN=1d
+
+   DB_HOST=oracle.fiap.com.br
+   DB_PORT=1521
+   DB_SID=ORCL
+   DB_USER=rm557716
+   DB_PASSWORD=090905
    DB_SYNCHRONIZE=true
    DB_LOGGING=false
    ```
@@ -102,58 +139,94 @@ O cadastro de uma nova nutriz (`POST /v1/nutrizes`) é a única rota totalmente 
 
 ## Exemplos de uso
 
-Fluxo sugerido para testar a API do zero (todos os exemplos abaixo usam `curl`, mas os mesmos passos podem ser feitos pelo Swagger em `/docs`):
+Fluxo sugerido para testar a API do zero (os mesmos passos também podem ser feitos direto pelo Swagger em `/docs`):
 
-**1. Login como administrador (para acessar rotas administrativas):**
+### 1. Login como administrador
 
-```bash
-curl -X POST http://localhost:3000/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@lactareconnect.com","senha":"admin123","tipo":"administrador"}'
+`POST /v1/auth/login`
+
+```json
+{
+  "email": "admin@lactareconnect.com",
+  "senha": "admin123",
+  "tipo": "administrador"
+}
 ```
 
-A resposta traz `accessToken`. Use-o no cabeçalho `Authorization: Bearer <accessToken>` nas próximas chamadas.
+Resposta:
 
-**2. Cadastrar uma nutriz (rota pública, não exige token):**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "tipo": "administrador",
+  "id": 1,
+  "nome": "Administrador Inicial"
+}
+```
 
-```bash
-curl -X POST http://localhost:3000/v1/nutrizes \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nome": "Maria Silva",
-    "cpf": "12345678900",
-    "dataNascimento": "1995-05-10",
-    "telefone": "11999999999",
-    "email": "maria@exemplo.com",
-    "senha": "senha123"
-  }'
+Use o `accessToken` no cabeçalho `Authorization: Bearer <accessToken>` nas próximas chamadas que exigirem autenticação.
+
+### 2. Cadastrar uma nutriz
+
+`POST /v1/nutrizes` (rota pública, não exige token)
+
+```json
+{
+  "nome": "Maria Silva",
+  "cpf": "12345678900",
+  "dataNascimento": "1995-05-10",
+  "telefone": "11999999999",
+  "email": "maria@exemplo.com",
+  "senha": "senha123"
+}
+```
+
+Resposta:
+
+```json
+{
+  "id": 1,
+  "nome": "Maria Silva",
+  "cpf": "12345678900",
+  "dataNascimento": "1995-05-10T00:00:00.000Z",
+  "telefone": "11999999999",
+  "email": "maria@exemplo.com",
+  "status": "pendente",
+  "saldoGotinhas": 0,
+  "dataCadastro": "2026-07-28T05:00:00.000Z",
+  "enderecoId": null,
+  "preferenciasId": null
+}
 ```
 
 Guarde o `id` retornado — ele é usado como `nutrizId` nos exemplos seguintes.
 
-**3. Login como a nutriz recém-criada:**
+### 3. Login como a nutriz recém-criada
 
-```bash
-curl -X POST http://localhost:3000/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"maria@exemplo.com","senha":"senha123","tipo":"nutriz"}'
+`POST /v1/auth/login`
+
+```json
+{
+  "email": "maria@exemplo.com",
+  "senha": "senha123",
+  "tipo": "nutriz"
+}
 ```
 
-**4. Usar o token da nutriz para cadastrar seu endereço:**
+### 4. Cadastrar o endereço da nutriz
 
-```bash
-curl -X POST http://localhost:3000/v1/enderecos \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <accessToken-da-nutriz>" \
-  -d '{
-    "nutrizId": 1,
-    "cep": "01310-100",
-    "rua": "Avenida Paulista",
-    "numero": "1000",
-    "bairro": "Bela Vista",
-    "cidade": "São Paulo",
-    "uf": "SP"
-  }'
+`POST /v1/enderecos` (exige `Authorization: Bearer <accessToken-da-nutriz>`)
+
+```json
+{
+  "nutrizId": 1,
+  "cep": "01310-100",
+  "rua": "Avenida Paulista",
+  "numero": "1000",
+  "bairro": "Bela Vista",
+  "cidade": "São Paulo",
+  "uf": "SP"
+}
 ```
 
 O mesmo padrão vale para as demais entidades que dependem de um `nutrizId`, `bancoId`, `agendamentoId`, etc.: crie primeiro o registro "pai" (nutriz, banco de leite, agendamento...), pegue o `id` retornado, e use-o no corpo da próxima requisição. Todos os endpoints, seus parâmetros e exemplos de payload também podem ser explorados diretamente pelo Swagger (`/docs`).
