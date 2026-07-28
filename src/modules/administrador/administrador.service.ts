@@ -5,7 +5,6 @@ import {
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -13,6 +12,10 @@ import { Administrador } from './entities/administrador.entity';
 import { BancoLeiteLactare } from '../banco-leite/entities/banco-leite.entity';
 import { CreateAdministradorDto } from './dto/create-administrador.dto';
 import { UpdateAdministradorDto } from './dto/update-administrador.dto';
+
+const SEED_ADMIN_NOME = 'Administrador Inicial';
+const SEED_ADMIN_EMAIL = 'admin@lactareconnect.com';
+const SEED_ADMIN_SENHA = 'admin123';
 
 @Injectable()
 export class AdministradorService implements OnModuleInit {
@@ -23,7 +26,6 @@ export class AdministradorService implements OnModuleInit {
     private readonly administradorRepository: Repository<Administrador>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
-    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -37,27 +39,17 @@ export class AdministradorService implements OnModuleInit {
       return;
     }
 
-    const email = this.configService.get<string>('seedAdmin.email');
-    const senha = this.configService.get<string>('seedAdmin.senha');
-    if (!email || !senha) {
-      this.logger.warn(
-        'Nenhum administrador cadastrado e SEED_ADMIN_EMAIL/SEED_ADMIN_SENHA não configurados no .env — não foi possível criar o administrador inicial.',
-      );
-      return;
-    }
-
-    const nome =
-      this.configService.get<string>('seedAdmin.nome') ??
-      'Administrador Inicial';
-    const senhaHash = await bcrypt.hash(senha, 10);
+    const senhaHash = await bcrypt.hash(SEED_ADMIN_SENHA, 10);
     const administrador = this.administradorRepository.create({
-      nome,
-      email,
+      nome: SEED_ADMIN_NOME,
+      email: SEED_ADMIN_EMAIL,
       senhaHash,
       papel: 'administrador',
     });
     await this.administradorRepository.save(administrador);
-    this.logger.log(`Administrador inicial criado automaticamente: ${email}`);
+    this.logger.log(
+      `Administrador inicial criado automaticamente: ${SEED_ADMIN_EMAIL}`,
+    );
   }
 
   async create(
