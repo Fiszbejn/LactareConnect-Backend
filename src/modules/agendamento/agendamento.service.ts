@@ -91,7 +91,7 @@ export class AgendamentoService {
     const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
     const agendamentos = await this.agendamentoRepository.find({
       where,
-      relations: { nutriz: true, banco: true },
+      relations: { nutriz: true, banco: true, doacao: true },
     });
     return agendamentos.map(toAgendamentoResponseDto);
   }
