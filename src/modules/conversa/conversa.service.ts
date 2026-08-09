@@ -1,13 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Conversa, ConversaStatus } from './entities/conversa.entity';
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
+import { Mensagem, MensagemRemetente } from '../mensagem/entities/mensagem.entity';
 import { CreateConversaDto } from './dto/create-conversa.dto';
 import {
   ConversaResponseDto,
   toConversaResponseDto,
 } from './dto/conversa-response.dto';
+import { EnviarMensagemDto } from '../mensagem/dto/enviar-mensagem.dto';
+import { EnviarMensagemResponseDto } from '../mensagem/dto/enviar-mensagem-response.dto';
+import { toMensagemResponseDto } from '../mensagem/dto/mensagem-response.dto';
+import { AuthUser } from '../auth/types/auth-user.type';
 
 @Injectable()
 export class ConversaService {
@@ -20,8 +30,15 @@ export class ConversaService {
 
   async create(
     createConversaDto: CreateConversaDto,
+    user: AuthUser,
   ): Promise<ConversaResponseDto> {
     const { nutrizId, ...dados } = createConversaDto;
+
+    if (user.tipo === 'nutriz' && user.id !== nutrizId) {
+      throw new ForbiddenException(
+        'Você só pode iniciar uma conversa para você mesma.',
+      );
+    }
 
     const nutriz = await this.dataSource
       .getRepository(Nutriz)
@@ -40,6 +57,64 @@ export class ConversaService {
 
     const conversa = this.conversaRepository.create({ ...dados, nutriz });
     return toConversaResponseDto(await this.conversaRepository.save(conversa));
+  }
+
+  /**
+   * Envia a mensagem da nutriz e já devolve a resposta da Lila na mesma
+   * chamada. A geração da resposta hoje é um placeholder fixo — não existe
+   * IA integrada ainda; quando existir, só a implementação de
+   * `gerarRespostaPlaceholder` muda, o contrato do endpoint (o que o app
+   * Flutter chama e recebe de volta) permanece o mesmo.
+   */
+  async enviarMensagem(
+    conversaId: number,
+    dto: EnviarMensagemDto,
+    user: AuthUser,
+  ): Promise<EnviarMensagemResponseDto> {
+    const conversa = await this.conversaRepository.findOne({
+      where: { id: conversaId },
+      relations: { nutriz: true },
+    });
+    if (!conversa) {
+      throw new NotFoundException(`Conversa #${conversaId} não encontrada`);
+    }
+    if (user.tipo === 'nutriz' && user.id !== conversa.nutriz.id) {
+      throw new ForbiddenException(
+        'Você não tem permissão para enviar mensagens nesta conversa.',
+      );
+    }
+    if (conversa.status === ConversaStatus.ENCERRADA) {
+      throw new BadRequestException(
+        'Não é possível adicionar mensagens a uma conversa encerrada.',
+      );
+    }
+
+    const mensagemRepository = this.dataSource.getRepository(Mensagem);
+
+    const mensagemUsuario = await mensagemRepository.save(
+      mensagemRepository.create({
+        remetente: MensagemRemetente.USUARIO,
+        texto: dto.texto,
+        conversa,
+      }),
+    );
+
+    const mensagemBot = await mensagemRepository.save(
+      mensagemRepository.create({
+        remetente: MensagemRemetente.BOT,
+        texto: this.gerarRespostaPlaceholder(),
+        conversa,
+      }),
+    );
+
+    return {
+      mensagemUsuario: toMensagemResponseDto(mensagemUsuario),
+      respostaBot: toMensagemResponseDto(mensagemBot),
+    };
+  }
+
+  private gerarRespostaPlaceholder(): string {
+    return 'Obrigada por escrever! Nossa assistente Lila ainda está sendo treinada — em breve vou te responder de verdade por aqui.';
   }
 
   async findAll(): Promise<ConversaResponseDto[]> {
