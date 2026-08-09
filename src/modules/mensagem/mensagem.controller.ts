@@ -26,7 +26,9 @@ export class MensagemController {
   constructor(private readonly mensagemService: MensagemService) {}
 
   @ApiOperation({
-    summary: 'Enviar uma mensagem (bloqueada se a conversa estiver encerrada)',
+    summary:
+      'Criar uma mensagem avulsa (uso administrativo — a nutriz usa ' +
+      'POST /conversas/:id/mensagens, que já devolve a resposta da Lila)',
   })
   @ApiCreatedResponse({ type: MensagemResponseDto })
   @Post()
