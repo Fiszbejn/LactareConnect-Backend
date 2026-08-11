@@ -5,9 +5,6 @@ export class EnviarMensagemResponseDto {
   @ApiProperty({ description: 'Mensagem da nutriz, já persistida' })
   mensagemUsuario: MensagemResponseDto;
 
-  @ApiProperty({
-    description:
-      'Resposta da Lila (hoje: texto fixo/placeholder; pode virar IA de verdade sem mudar o contrato)',
-  })
+  @ApiProperty({ description: 'Resposta da Lila, gerada em tempo real por IA' })
   respostaBot: MensagemResponseDto;
 }

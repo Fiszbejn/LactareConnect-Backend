@@ -18,6 +18,7 @@ import { EnviarMensagemDto } from '../mensagem/dto/enviar-mensagem.dto';
 import { EnviarMensagemResponseDto } from '../mensagem/dto/enviar-mensagem-response.dto';
 import { toMensagemResponseDto } from '../mensagem/dto/mensagem-response.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
+import { LilaAiService } from './lila-ai.service';
 
 @Injectable()
 export class ConversaService {
@@ -26,6 +27,7 @@ export class ConversaService {
     private readonly conversaRepository: Repository<Conversa>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly lilaAiService: LilaAiService,
   ) {}
 
   async create(
@@ -61,10 +63,8 @@ export class ConversaService {
 
   /**
    * Envia a mensagem da nutriz e já devolve a resposta da Lila na mesma
-   * chamada. A geração da resposta hoje é um placeholder fixo — não existe
-   * IA integrada ainda; quando existir, só a implementação de
-   * `gerarRespostaPlaceholder` muda, o contrato do endpoint (o que o app
-   * Flutter chama e recebe de volta) permanece o mesmo.
+   * chamada, gerada em tempo real pelo Gemini com base no histórico da
+   * conversa e nas perguntas frequentes cadastradas.
    */
   async enviarMensagem(
     conversaId: number,
@@ -91,6 +91,11 @@ export class ConversaService {
 
     const mensagemRepository = this.dataSource.getRepository(Mensagem);
 
+    const historico = await mensagemRepository.find({
+      where: { conversa: { id: conversaId } },
+      order: { timestamp: 'ASC' },
+    });
+
     const mensagemUsuario = await mensagemRepository.save(
       mensagemRepository.create({
         remetente: MensagemRemetente.USUARIO,
@@ -99,10 +104,15 @@ export class ConversaService {
       }),
     );
 
+    const respostaTexto = await this.lilaAiService.gerarResposta(
+      historico,
+      dto.texto,
+    );
+
     const mensagemBot = await mensagemRepository.save(
       mensagemRepository.create({
         remetente: MensagemRemetente.BOT,
-        texto: this.gerarRespostaPlaceholder(),
+        texto: respostaTexto,
         conversa,
       }),
     );
@@ -111,10 +121,6 @@ export class ConversaService {
       mensagemUsuario: toMensagemResponseDto(mensagemUsuario),
       respostaBot: toMensagemResponseDto(mensagemBot),
     };
-  }
-
-  private gerarRespostaPlaceholder(): string {
-    return 'Obrigada por escrever! Nossa assistente Lila ainda está sendo treinada — em breve vou te responder de verdade por aqui.';
   }
 
   async findAll(): Promise<ConversaResponseDto[]> {
