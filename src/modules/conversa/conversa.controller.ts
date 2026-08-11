@@ -43,9 +43,7 @@ export class ConversaController {
 
   @ApiOperation({
     summary:
-      'Enviar uma mensagem na conversa e receber a resposta da Lila na mesma chamada ' +
-      '(hoje: resposta fixa/placeholder; a lógica de geração pode evoluir pra IA de verdade ' +
-      'sem mudar este contrato)',
+      'Enviar uma mensagem na conversa e receber a resposta da Lila (gerada por IA) na mesma chamada',
   })
   @ApiCreatedResponse({ type: EnviarMensagemResponseDto })
   @Post(':id/mensagens')

@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
+import geminiConfig from './config/gemini.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { NutrizModule } from './modules/nutriz/nutriz.module';
 import { EnderecoModule } from './modules/endereco/endereco.module';
@@ -28,7 +29,7 @@ import { RelatorioGeradoModule } from './modules/relatorio-gerado/relatorio-gera
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, jwtConfig],
+      load: [databaseConfig, jwtConfig, geminiConfig],
       envFilePath: '.env',
     }),
     TypeOrmModule.forRootAsync({
