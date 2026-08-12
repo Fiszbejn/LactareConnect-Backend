@@ -6,7 +6,7 @@ import {
   OneToMany,
   JoinColumn,
 } from 'typeorm';
-import { BancoLeiteLactare } from '../../banco-leite/entities/banco-leite.entity';
+import { RegiaoAtendimento } from '../../regiao-atendimento/entities/regiao-atendimento.entity';
 import { RelatorioGerado } from '../../relatorio-gerado/entities/relatorio-gerado.entity';
 
 @Entity('administradores')
@@ -26,11 +26,11 @@ export class Administrador {
   @Column({ length: 50 })
   papel: string;
 
-  @ManyToOne(() => BancoLeiteLactare, (banco) => banco.administradores, {
+  @ManyToOne(() => RegiaoAtendimento, (regiao) => regiao.administradores, {
     nullable: true,
   })
-  @JoinColumn({ name: 'banco_vinculado_id' })
-  bancoVinculado: BancoLeiteLactare;
+  @JoinColumn({ name: 'regiao_atendimento_vinculada_id' })
+  regiaoAtendimentoVinculada: RegiaoAtendimento;
 
   @OneToMany(() => RelatorioGerado, (relatorio) => relatorio.administrador)
   relatoriosGerados: RelatorioGerado[];

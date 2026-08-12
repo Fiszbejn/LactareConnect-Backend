@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Nutriz } from '../../nutriz/entities/nutriz.entity';
-import { BancoLeiteLactare } from '../../banco-leite/entities/banco-leite.entity';
+import { RegiaoAtendimento } from '../../regiao-atendimento/entities/regiao-atendimento.entity';
 import { Doacao } from '../../doacao/entities/doacao.entity';
 
 export enum AgendamentoStatus {
@@ -37,9 +37,9 @@ export class Agendamento {
   @JoinColumn({ name: 'nutriz_id' })
   nutriz: Nutriz;
 
-  @ManyToOne(() => BancoLeiteLactare, (banco) => banco.agendamentos)
-  @JoinColumn({ name: 'banco_id' })
-  banco: BancoLeiteLactare;
+  @ManyToOne(() => RegiaoAtendimento, (regiao) => regiao.agendamentos)
+  @JoinColumn({ name: 'regiao_atendimento_id' })
+  regiaoAtendimento: RegiaoAtendimento;
 
   @OneToOne(() => Doacao, (doacao) => doacao.agendamento)
   doacao: Doacao;

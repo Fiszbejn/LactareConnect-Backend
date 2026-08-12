@@ -1,10 +1,10 @@
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class CreateBancoLeiteDto {
+export class CreateRegiaoAtendimentoDto {
   @ApiProperty({
-    description: 'Nome do banco de leite',
-    example: 'Banco de Leite Central',
+    description: 'Nome da região de atendimento',
+    example: 'Lactare - São Paulo',
   })
   @IsString({ message: 'O nome deve ser um texto' })
   @IsNotEmpty({ message: 'O nome é obrigatório' })

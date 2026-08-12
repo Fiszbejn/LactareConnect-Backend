@@ -21,11 +21,11 @@ export class AdministradorResponseDto {
   papel: string;
 
   @ApiPropertyOptional({
-    description: 'Id do banco de leite vinculado, se houver',
+    description: 'Id da região de atendimento vinculada, se houver',
     example: 3,
     nullable: true,
   })
-  bancoVinculadoId: number | null;
+  regiaoAtendimentoVinculadaId: number | null;
 }
 
 export function toAdministradorResponseDto(
@@ -36,6 +36,7 @@ export function toAdministradorResponseDto(
     nome: administrador.nome,
     email: administrador.email,
     papel: administrador.papel,
-    bancoVinculadoId: administrador.bancoVinculado?.id ?? null,
+    regiaoAtendimentoVinculadaId:
+      administrador.regiaoAtendimentoVinculada?.id ?? null,
   };
 }

@@ -116,7 +116,7 @@ Lá é possível ver todos os endpoints, seus DTOs de entrada/saída, e testar r
 A API usa login por e-mail/senha com token JWT (`POST /v1/auth/login`), com três perfis de acesso:
 
 - **Rotas administrativas** (`Administrador`, `Campanha`, `RelatorioGerado`, `TransacaoGotinhas`, `Conversa`, `Mensagem`): exigem token de administrador.
-- **Rotas de catálogo** (`BancoLeite`, `Recompensa`, `PerguntaFrequente`): leitura aberta a qualquer usuário autenticado, escrita restrita a administrador.
+- **Rotas de catálogo** (`RegiaoAtendimento`, `Recompensa`, `PerguntaFrequente`): leitura aberta a qualquer usuário autenticado, escrita restrita a administrador.
 - **Rotas de dono do registro** (`Nutriz`, `Endereco`, `PreferenciasUsuario`, `ExamePreDoacao`, `Agendamento`, `Doacao`, `Resgate`, `FeedbackFaq`): uma nutriz só acessa/edita os próprios dados; administrador acessa todos.
 
 O cadastro de uma nova nutriz (`POST /v1/nutrizes`) é a única rota totalmente pública, pois é o ponto de entrada de um novo usuário no sistema.
