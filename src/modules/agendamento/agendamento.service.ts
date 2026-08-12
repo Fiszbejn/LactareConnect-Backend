@@ -8,7 +8,7 @@ import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Agendamento } from './entities/agendamento.entity';
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
-import { BancoLeiteLactare } from '../banco-leite/entities/banco-leite.entity';
+import { RegiaoAtendimento } from '../regiao-atendimento/entities/regiao-atendimento.entity';
 import {
   ExamePreDoacao,
   ExameStatus,
@@ -42,7 +42,7 @@ export class AgendamentoService {
     createAgendamentoDto: CreateAgendamentoDto,
     user: AuthUser,
   ): Promise<AgendamentoResponseDto> {
-    const { nutrizId, bancoId, ...dados } = createAgendamentoDto;
+    const { nutrizId, regiaoAtendimentoId, ...dados } = createAgendamentoDto;
 
     if (user.tipo === 'nutriz' && user.id !== nutrizId) {
       throw new ForbiddenException(
@@ -56,11 +56,13 @@ export class AgendamentoService {
     if (!nutriz) {
       throw new NotFoundException(`Nutriz #${nutrizId} não encontrada`);
     }
-    const banco = await this.dataSource
-      .getRepository(BancoLeiteLactare)
-      .findOneBy({ id: bancoId });
-    if (!banco) {
-      throw new NotFoundException(`Banco de leite #${bancoId} não encontrado`);
+    const regiaoAtendimento = await this.dataSource
+      .getRepository(RegiaoAtendimento)
+      .findOneBy({ id: regiaoAtendimentoId });
+    if (!regiaoAtendimento) {
+      throw new NotFoundException(
+        `Região de atendimento #${regiaoAtendimentoId} não encontrada`,
+      );
     }
 
     const examesOk = await this.dataSource.getRepository(ExamePreDoacao).find({
@@ -80,7 +82,7 @@ export class AgendamentoService {
       ...dados,
       dataColeta: new Date(dados.dataColeta),
       nutriz,
-      banco,
+      regiaoAtendimento,
     });
     return toAgendamentoResponseDto(
       await this.agendamentoRepository.save(agendamento),
@@ -91,7 +93,7 @@ export class AgendamentoService {
     const where = user.tipo === 'nutriz' ? { nutriz: { id: user.id } } : {};
     const agendamentos = await this.agendamentoRepository.find({
       where,
-      relations: { nutriz: true, banco: true, doacao: true },
+      relations: { nutriz: true, regiaoAtendimento: true, doacao: true },
     });
     return agendamentos.map(toAgendamentoResponseDto);
   }
@@ -99,7 +101,7 @@ export class AgendamentoService {
   private async buscarPorId(id: number, user: AuthUser): Promise<Agendamento> {
     const agendamento = await this.agendamentoRepository.findOne({
       where: { id },
-      relations: { nutriz: true, banco: true, doacao: true },
+      relations: { nutriz: true, regiaoAtendimento: true, doacao: true },
     });
     if (!agendamento) {
       throw new NotFoundException(`Agendamento #${id} não encontrado`);
@@ -122,7 +124,7 @@ export class AgendamentoService {
     user: AuthUser,
   ): Promise<AgendamentoResponseDto> {
     const agendamento = await this.buscarPorId(id, user);
-    const { nutrizId, bancoId, ...dados } = updateAgendamentoDto;
+    const { nutrizId, regiaoAtendimentoId, ...dados } = updateAgendamentoDto;
     Object.assign(agendamento, dados);
     if (dados.dataColeta) {
       agendamento.dataColeta = new Date(dados.dataColeta);
@@ -141,16 +143,16 @@ export class AgendamentoService {
       }
       agendamento.nutriz = nutriz;
     }
-    if (bancoId) {
-      const banco = await this.dataSource
-        .getRepository(BancoLeiteLactare)
-        .findOneBy({ id: bancoId });
-      if (!banco) {
+    if (regiaoAtendimentoId) {
+      const regiaoAtendimento = await this.dataSource
+        .getRepository(RegiaoAtendimento)
+        .findOneBy({ id: regiaoAtendimentoId });
+      if (!regiaoAtendimento) {
         throw new NotFoundException(
-          `Banco de leite #${bancoId} não encontrado`,
+          `Região de atendimento #${regiaoAtendimentoId} não encontrada`,
         );
       }
-      agendamento.banco = banco;
+      agendamento.regiaoAtendimento = regiaoAtendimento;
     }
     return toAgendamentoResponseDto(
       await this.agendamentoRepository.save(agendamento),

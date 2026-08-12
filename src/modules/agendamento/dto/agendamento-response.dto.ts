@@ -28,11 +28,11 @@ export class AgendamentoResponseDto {
   nutrizId: number | null;
 
   @ApiPropertyOptional({
-    description: 'Id do banco de leite',
+    description: 'Id da região de atendimento',
     example: 2,
     nullable: true,
   })
-  bancoId: number | null;
+  regiaoAtendimentoId: number | null;
 
   @ApiPropertyOptional({
     description:
@@ -52,7 +52,7 @@ export function toAgendamentoResponseDto(
     horario: agendamento.horario,
     status: agendamento.status,
     nutrizId: agendamento.nutriz?.id ?? null,
-    bancoId: agendamento.banco?.id ?? null,
+    regiaoAtendimentoId: agendamento.regiaoAtendimento?.id ?? null,
     doacaoId: agendamento.doacao?.id ?? null,
   };
 }

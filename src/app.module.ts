@@ -10,7 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { NutrizModule } from './modules/nutriz/nutriz.module';
 import { EnderecoModule } from './modules/endereco/endereco.module';
 import { PreferenciasUsuarioModule } from './modules/preferencias-usuario/preferencias-usuario.module';
-import { BancoLeiteModule } from './modules/banco-leite/banco-leite.module';
+import { RegiaoAtendimentoModule } from './modules/regiao-atendimento/regiao-atendimento.module';
 import { ExamePreDoacaoModule } from './modules/exame-pre-doacao/exame-pre-doacao.module';
 import { AgendamentoModule } from './modules/agendamento/agendamento.module';
 import { DoacaoModule } from './modules/doacao/doacao.module';
@@ -51,7 +51,7 @@ import { RelatorioGeradoModule } from './modules/relatorio-gerado/relatorio-gera
     NutrizModule,
     EnderecoModule,
     PreferenciasUsuarioModule,
-    BancoLeiteModule,
+    RegiaoAtendimentoModule,
     ExamePreDoacaoModule,
     AgendamentoModule,
     DoacaoModule,

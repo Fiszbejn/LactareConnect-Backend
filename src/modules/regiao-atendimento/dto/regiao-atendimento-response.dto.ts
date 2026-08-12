@@ -1,13 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BancoLeiteLactare } from '../entities/banco-leite.entity';
+import { RegiaoAtendimento } from '../entities/regiao-atendimento.entity';
 
-export class BancoLeiteResponseDto {
-  @ApiProperty({ description: 'Id do banco de leite', example: 1 })
+export class RegiaoAtendimentoResponseDto {
+  @ApiProperty({ description: 'Id da região de atendimento', example: 1 })
   id: number;
 
   @ApiProperty({
-    description: 'Nome do banco de leite',
-    example: 'Banco de Leite Central',
+    description: 'Nome da região de atendimento',
+    example: 'Lactare - São Paulo',
   })
   nome: string;
 
@@ -38,15 +38,15 @@ export class BancoLeiteResponseDto {
   longitude: number | null;
 }
 
-export function toBancoLeiteResponseDto(
-  banco: BancoLeiteLactare,
-): BancoLeiteResponseDto {
+export function toRegiaoAtendimentoResponseDto(
+  regiao: RegiaoAtendimento,
+): RegiaoAtendimentoResponseDto {
   return {
-    id: banco.id,
-    nome: banco.nome,
-    enderecoTexto: banco.enderecoTexto,
-    areaAtendimento: banco.areaAtendimento,
-    latitude: banco.latitude ?? null,
-    longitude: banco.longitude ?? null,
+    id: regiao.id,
+    nome: regiao.nome,
+    enderecoTexto: regiao.enderecoTexto,
+    areaAtendimento: regiao.areaAtendimento,
+    latitude: regiao.latitude ?? null,
+    longitude: regiao.longitude ?? null,
   };
 }

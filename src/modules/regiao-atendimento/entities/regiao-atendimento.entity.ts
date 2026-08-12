@@ -2,8 +2,8 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Agendamento } from '../../agendamento/entities/agendamento.entity';
 import { Administrador } from '../../administrador/entities/administrador.entity';
 
-@Entity('bancos_leite')
-export class BancoLeiteLactare {
+@Entity('regioes_atendimento')
+export class RegiaoAtendimento {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -22,12 +22,12 @@ export class BancoLeiteLactare {
   @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
   longitude: number;
 
-  @OneToMany(() => Agendamento, (agendamento) => agendamento.banco)
+  @OneToMany(() => Agendamento, (agendamento) => agendamento.regiaoAtendimento)
   agendamentos: Agendamento[];
 
   @OneToMany(
     () => Administrador,
-    (administrador) => administrador.bancoVinculado,
+    (administrador) => administrador.regiaoAtendimentoVinculada,
   )
   administradores: Administrador[];
 }

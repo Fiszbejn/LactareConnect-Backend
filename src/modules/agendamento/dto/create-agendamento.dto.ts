@@ -44,10 +44,10 @@ export class CreateAgendamentoDto {
   @IsPositive({ message: 'O ID da nutriz deve ser um número positivo' })
   nutrizId: number;
 
-  @ApiProperty({ description: 'ID do banco de leite', example: 1 })
-  @IsInt({ message: 'O ID do banco de leite deve ser um número inteiro' })
+  @ApiProperty({ description: 'ID da região de atendimento', example: 1 })
+  @IsInt({ message: 'O ID da região de atendimento deve ser um número inteiro' })
   @IsPositive({
-    message: 'O ID do banco de leite deve ser um número positivo',
+    message: 'O ID da região de atendimento deve ser um número positivo',
   })
-  bancoId: number;
+  regiaoAtendimentoId: number;
 }

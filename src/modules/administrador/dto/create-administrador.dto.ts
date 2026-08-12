@@ -40,13 +40,15 @@ export class CreateAdministradorDto {
   papel: string;
 
   @ApiPropertyOptional({
-    description: 'ID do banco de leite vinculado, se houver',
+    description: 'ID da região de atendimento vinculada, se houver',
     example: 1,
   })
   @IsOptional()
-  @IsInt({ message: 'O ID do banco vinculado deve ser um número inteiro' })
-  @IsPositive({
-    message: 'O ID do banco vinculado deve ser um número positivo',
+  @IsInt({
+    message: 'O ID da região de atendimento vinculada deve ser um número inteiro',
   })
-  bancoVinculadoId?: number;
+  @IsPositive({
+    message: 'O ID da região de atendimento vinculada deve ser um número positivo',
+  })
+  regiaoAtendimentoVinculadaId?: number;
 }
