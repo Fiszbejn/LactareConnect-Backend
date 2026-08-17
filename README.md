@@ -33,9 +33,7 @@ Não é necessário ter Node.js, npm ou Oracle Instant Client instalados localme
    cp .env.example .env
    ```
 
-2. Preencha o `.env`. Duas opções:
-
-   **Opção A — usar suas próprias credenciais Oracle:**
+2. Preencha o `.env` com suas credenciais Oracle:
 
    ```dotenv
    APP_PORT=3000
@@ -48,23 +46,6 @@ Não é necessário ter Node.js, npm ou Oracle Instant Client instalados localme
    DB_SID=seu-sid
    DB_USER=seu-usuario
    DB_PASSWORD=sua-senha
-   DB_SYNCHRONIZE=true
-   DB_LOGGING=false
-   ```
-
-   **Opção B — usar o mesmo Oracle utilizado no desenvolvimento** (ambiente de treinamento da FIAP, sem dados sensíveis reais — use estas credenciais se não quiser configurar um Oracle próprio):
-
-   ```dotenv
-   APP_PORT=3000
-
-   JWT_SECRET=lactareconnect-dev-secret-fiap-2026
-   JWT_EXPIRES_IN=1d
-
-   DB_HOST=oracle.fiap.com.br
-   DB_PORT=1521
-   DB_SID=ORCL
-   DB_USER=rm557716
-   DB_PASSWORD=090905
    DB_SYNCHRONIZE=true
    DB_LOGGING=false
    ```
@@ -215,7 +196,7 @@ Guarde o `id` retornado — ele é usado como `nutrizId` nos exemplos seguintes.
 }
 ```
 
-O mesmo padrão vale para as demais entidades que dependem de um `nutrizId`, `bancoId`, `agendamentoId`, etc.: crie primeiro o registro "pai" (nutriz, banco de leite, agendamento...), pegue o `id` retornado, e use-o no corpo da próxima requisição. Todos os endpoints, seus parâmetros e exemplos de payload também podem ser explorados diretamente pelo Swagger (`/docs`).
+O mesmo padrão vale para as demais entidades que dependem de um `nutrizId`, `regiaoId`, `agendamentoId`, etc.: crie primeiro o registro "pai" (nutriz, banco de leite, agendamento...), pegue o `id` retornado, e use-o no corpo da próxima requisição. Todos os endpoints, seus parâmetros e exemplos de payload também podem ser explorados diretamente pelo Swagger (`/docs`).
 
 ## Estruturas de entrada e saída
 
