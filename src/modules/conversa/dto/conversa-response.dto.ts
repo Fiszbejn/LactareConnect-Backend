@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Conversa, ConversaStatus } from '../entities/conversa.entity';
+import {
+  Conversa,
+  ConversaCanal,
+  ConversaStatus,
+} from '../entities/conversa.entity';
 
 export class ConversaResponseDto {
   @ApiProperty({ description: 'Id da conversa', example: 1 })
@@ -14,6 +18,12 @@ export class ConversaResponseDto {
   @ApiProperty({ description: 'Status da conversa', enum: ConversaStatus })
   status: ConversaStatus;
 
+  @ApiProperty({
+    description: 'Canal de origem da conversa',
+    enum: ConversaCanal,
+  })
+  canal: ConversaCanal;
+
   @ApiPropertyOptional({
     description: 'Id da nutriz',
     example: 17,
@@ -27,6 +37,7 @@ export function toConversaResponseDto(conversa: Conversa): ConversaResponseDto {
     id: conversa.id,
     dataInicio: conversa.dataInicio,
     status: conversa.status,
+    canal: conversa.canal,
     nutrizId: conversa.nutriz?.id ?? null,
   };
 }

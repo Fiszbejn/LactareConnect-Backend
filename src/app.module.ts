@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import geminiConfig from './config/gemini.config';
+import whatsappConfig from './config/whatsapp.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { NutrizModule } from './modules/nutriz/nutriz.module';
 import { EnderecoModule } from './modules/endereco/endereco.module';
@@ -24,12 +25,13 @@ import { MensagemModule } from './modules/mensagem/mensagem.module';
 import { AdministradorModule } from './modules/administrador/administrador.module';
 import { CampanhaModule } from './modules/campanha/campanha.module';
 import { RelatorioGeradoModule } from './modules/relatorio-gerado/relatorio-gerado.module';
+import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, jwtConfig, geminiConfig],
+      load: [databaseConfig, jwtConfig, geminiConfig, whatsappConfig],
       envFilePath: '.env',
     }),
     TypeOrmModule.forRootAsync({
@@ -65,6 +67,7 @@ import { RelatorioGeradoModule } from './modules/relatorio-gerado/relatorio-gera
     AdministradorModule,
     CampanhaModule,
     RelatorioGeradoModule,
+    WhatsappModule,
   ],
   controllers: [AppController],
   providers: [AppService],

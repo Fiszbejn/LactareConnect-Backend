@@ -4,7 +4,10 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { GoogleGenAI } from '@google/genai';
 import { PerguntaFrequente } from '../pergunta-frequente/entities/pergunta-frequente.entity';
-import { Mensagem, MensagemRemetente } from '../mensagem/entities/mensagem.entity';
+import {
+  Mensagem,
+  MensagemRemetente,
+} from '../mensagem/entities/mensagem.entity';
 
 const RESPOSTA_INDISPONIVEL =
   'Desculpa, não consegui pensar em uma resposta agora. Pode tentar novamente em instantes?';
@@ -42,9 +45,7 @@ export class LilaAiService {
       const contents = [
         ...historico.map((mensagem) => ({
           role:
-            mensagem.remetente === MensagemRemetente.USUARIO
-              ? 'user'
-              : 'model',
+            mensagem.remetente === MensagemRemetente.USUARIO ? 'user' : 'model',
           parts: [{ text: mensagem.texto }],
         })),
         { role: 'user', parts: [{ text: perguntaAtual }] },
@@ -79,6 +80,7 @@ export class LilaAiService {
       'Nunca pressione, culpe ou julgue quem está considerando doar, pausou a doação ou desistiu.',
       'Responda de forma breve e clara, focada em dúvidas sobre doação de leite humano, agendamentos em bancos de leite, recompensas (gotinhas) e uso do app.',
       'Se a pergunta fugir totalmente desse escopo, redirecione com gentileza para os temas do app, sem soar rude.',
+      'Quando fizer sentido pela conversa, incentive a pessoa a abrir o app do LactareConnect para agendar uma coleta, conferir o saldo de Gotinhas ou ver campanhas ativas — de forma natural, sem repetir isso em toda resposta nem soar como propaganda.',
       'Use as perguntas frequentes abaixo como base de conhecimento sempre que forem relevantes para a pergunta da pessoa:',
       faq,
     ].join('\n\n');

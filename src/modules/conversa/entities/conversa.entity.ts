@@ -16,6 +16,11 @@ export enum ConversaStatus {
   ENCAMINHADA_HUMANO = 'encaminhada_humano',
 }
 
+export enum ConversaCanal {
+  APP = 'app',
+  WHATSAPP = 'whatsapp',
+}
+
 @Entity('conversas')
 export class Conversa {
   @PrimaryGeneratedColumn()
@@ -29,6 +34,12 @@ export class Conversa {
     default: ConversaStatus.ABERTA,
   })
   status: ConversaStatus;
+
+  @Column({
+    type: 'varchar',
+    default: ConversaCanal.APP,
+  })
+  canal: ConversaCanal;
 
   @ManyToOne(() => Nutriz, (nutriz) => nutriz.conversas)
   @JoinColumn({ name: 'nutriz_id' })
