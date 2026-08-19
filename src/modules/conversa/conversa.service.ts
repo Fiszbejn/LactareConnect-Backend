@@ -6,9 +6,16 @@ import {
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { Conversa, ConversaStatus } from './entities/conversa.entity';
+import {
+  Conversa,
+  ConversaCanal,
+  ConversaStatus,
+} from './entities/conversa.entity';
 import { Nutriz } from '../nutriz/entities/nutriz.entity';
-import { Mensagem, MensagemRemetente } from '../mensagem/entities/mensagem.entity';
+import {
+  Mensagem,
+  MensagemRemetente,
+} from '../mensagem/entities/mensagem.entity';
 import { CreateConversaDto } from './dto/create-conversa.dto';
 import {
   ConversaResponseDto,
@@ -19,6 +26,11 @@ import { EnviarMensagemResponseDto } from '../mensagem/dto/enviar-mensagem-respo
 import { toMensagemResponseDto } from '../mensagem/dto/mensagem-response.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
 import { LilaAiService } from './lila-ai.service';
+
+const CONVITE_CADASTRO =
+  'Oi! Aqui é a Lila, do LactareConnect 💛 Esse WhatsApp é exclusivo para nutrizes já cadastradas no app. ' +
+  'Não encontrei seu número na nossa base — se você tem interesse em doar leite humano, baixe o app LactareConnect ' +
+  'nas lojas de aplicativo e faça seu cadastro por lá. Depois disso já consigo te ajudar por aqui também!';
 
 @Injectable()
 export class ConversaService {
@@ -89,24 +101,113 @@ export class ConversaService {
       );
     }
 
+    const { mensagemUsuario, mensagemBot } = await this.processarMensagem(
+      conversa,
+      dto.texto,
+    );
+
+    return {
+      mensagemUsuario: toMensagemResponseDto(mensagemUsuario),
+      respostaBot: toMensagemResponseDto(mensagemBot),
+    };
+  }
+
+  /**
+   * Recebe uma mensagem vinda do webhook do WhatsApp, identifica a nutriz
+   * pelo telefone e devolve o texto da resposta da Lila para reenvio via
+   * Evolution API. Números sem cadastro correspondente recebem um convite
+   * para se cadastrar, sem persistir nada (não há nutriz para vincular).
+   */
+  async receberMensagemWhatsapp(
+    telefone: string,
+    texto: string,
+  ): Promise<string | null> {
+    const nutriz = await this.buscarNutrizPorTelefone(telefone);
+    if (!nutriz) {
+      return CONVITE_CADASTRO;
+    }
+
+    let conversa = await this.conversaRepository.findOne({
+      where: {
+        nutriz: { id: nutriz.id },
+        canal: ConversaCanal.WHATSAPP,
+        status: ConversaStatus.ABERTA,
+      },
+      relations: { nutriz: true },
+    });
+
+    if (!conversa) {
+      conversa = await this.conversaRepository.save(
+        this.conversaRepository.create({
+          nutriz,
+          canal: ConversaCanal.WHATSAPP,
+        }),
+      );
+    }
+
+    const { mensagemBot } = await this.processarMensagem(conversa, texto);
+    return mensagemBot.texto;
+  }
+
+  /**
+   * O telefone cadastrado pela nutriz e o número que chega no webhook do
+   * WhatsApp raramente batem byte a byte (DDI, o 9º dígito do celular),
+   * então a busca testa algumas variações plausíveis do mesmo número.
+   */
+  private async buscarNutrizPorTelefone(
+    telefoneWhatsapp: string,
+  ): Promise<Nutriz | null> {
+    const digitos = telefoneWhatsapp.replace(/\D/g, '');
+    const semDdi =
+      digitos.startsWith('55') && digitos.length > 11
+        ? digitos.slice(2)
+        : digitos;
+    const comNove =
+      semDdi.length === 10
+        ? `${semDdi.slice(0, 2)}9${semDdi.slice(2)}`
+        : semDdi;
+    const semNove =
+      semDdi.length === 11 ? `${semDdi.slice(0, 2)}${semDdi.slice(3)}` : semDdi;
+
+    const candidatos = [...new Set([digitos, semDdi, comNove, semNove])];
+
+    return this.dataSource
+      .getRepository(Nutriz)
+      .createQueryBuilder('nutriz')
+      .where(
+        candidatos
+          .map(
+            (_, i) =>
+              `REGEXP_REPLACE(nutriz.telefone, '[^0-9]', '') = :tel${i}`,
+          )
+          .join(' OR '),
+        Object.fromEntries(candidatos.map((tel, i) => [`tel${i}`, tel])),
+      )
+      .getOne();
+  }
+
+  private async processarMensagem(
+    conversa: Conversa,
+    texto: string,
+  ): Promise<{ mensagemUsuario: Mensagem; mensagemBot: Mensagem }> {
     const mensagemRepository = this.dataSource.getRepository(Mensagem);
 
     const historico = await mensagemRepository.find({
-      where: { conversa: { id: conversaId } },
+      where: { conversa: { id: conversa.id } },
       order: { timestamp: 'ASC' },
     });
 
     const mensagemUsuario = await mensagemRepository.save(
       mensagemRepository.create({
         remetente: MensagemRemetente.USUARIO,
-        texto: dto.texto,
+        texto,
         conversa,
       }),
     );
 
     const respostaTexto = await this.lilaAiService.gerarResposta(
       historico,
-      dto.texto,
+      texto,
     );
 
     const mensagemBot = await mensagemRepository.save(
@@ -117,10 +218,7 @@ export class ConversaService {
       }),
     );
 
-    return {
-      mensagemUsuario: toMensagemResponseDto(mensagemUsuario),
-      respostaBot: toMensagemResponseDto(mensagemBot),
-    };
+    return { mensagemUsuario, mensagemBot };
   }
 
   async findAll(): Promise<ConversaResponseDto[]> {
