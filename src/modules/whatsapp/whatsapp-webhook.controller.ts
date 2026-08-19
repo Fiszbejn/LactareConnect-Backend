@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Headers,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiExcludeController } from '@nestjs/swagger';
@@ -25,12 +26,14 @@ export class WhatsappWebhookController {
   @Post()
   async receber(
     @Body() payload: WhatsappWebhookDto,
-    @Headers('x-webhook-secret') secret: string,
+    @Headers('x-webhook-secret') secretHeader: string,
+    @Query('secret') secretQuery: string,
   ) {
     const segredoEsperado = this.configService.get<string>(
       'whatsapp.webhookSecret',
     );
-    if (segredoEsperado && secret !== segredoEsperado) {
+    const segredoRecebido = secretHeader ?? secretQuery;
+    if (segredoEsperado && segredoRecebido !== segredoEsperado) {
       throw new ForbiddenException('Assinatura do webhook inválida');
     }
 
