@@ -27,6 +27,11 @@ import { toMensagemResponseDto } from '../mensagem/dto/mensagem-response.dto';
 import { AuthUser } from '../auth/types/auth-user.type';
 import { LilaAiService } from './lila-ai.service';
 
+const CONVITE_CADASTRO =
+  'Oi! Aqui é a Lila, do LactareConnect 💛 Esse WhatsApp é exclusivo para nutrizes já cadastradas no app. ' +
+  'Não encontrei seu número na nossa base — se você tem interesse em doar leite humano, baixe o app LactareConnect ' +
+  'nas lojas de aplicativo e faça seu cadastro por lá. Depois disso já consigo te ajudar por aqui também!';
+
 @Injectable()
 export class ConversaService {
   constructor(
@@ -110,7 +115,8 @@ export class ConversaService {
   /**
    * Recebe uma mensagem vinda do webhook do WhatsApp, identifica a nutriz
    * pelo telefone e devolve o texto da resposta da Lila para reenvio via
-   * Evolution API. Números sem cadastro correspondente não persistem nada.
+   * Evolution API. Números sem cadastro correspondente recebem um convite
+   * para se cadastrar, sem persistir nada (não há nutriz para vincular).
    */
   async receberMensagemWhatsapp(
     telefone: string,
@@ -118,7 +124,7 @@ export class ConversaService {
   ): Promise<string | null> {
     const nutriz = await this.buscarNutrizPorTelefone(telefone);
     if (!nutriz) {
-      return null;
+      return CONVITE_CADASTRO;
     }
 
     let conversa = await this.conversaRepository.findOne({
