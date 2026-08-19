@@ -10,7 +10,7 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/public.decorator';
 import { ConversaService } from '../conversa/conversa.service';
 import { EvolutionApiService } from './evolution-api.service';
-import { WhatsappWebhookDto } from './dto/whatsapp-webhook.dto';
+import type { WhatsappWebhookDto } from './dto/whatsapp-webhook.dto';
 
 @ApiExcludeController()
 @Controller('webhooks/whatsapp')
