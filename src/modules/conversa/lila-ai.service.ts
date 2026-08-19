@@ -41,27 +41,41 @@ export class LilaAiService {
       return RESPOSTA_INDISPONIVEL;
     }
 
-    try {
-      const contents = [
-        ...historico.map((mensagem) => ({
-          role:
-            mensagem.remetente === MensagemRemetente.USUARIO ? 'user' : 'model',
-          parts: [{ text: mensagem.texto }],
-        })),
-        { role: 'user', parts: [{ text: perguntaAtual }] },
-      ];
+    const contents = [
+      ...historico.map((mensagem) => ({
+        role:
+          mensagem.remetente === MensagemRemetente.USUARIO ? 'user' : 'model',
+        parts: [{ text: mensagem.texto }],
+      })),
+      { role: 'user', parts: [{ text: perguntaAtual }] },
+    ];
+    const systemInstruction = await this.montarSystemInstruction();
 
-      const response = await this.client.models.generateContent({
-        model: this.model,
-        contents,
-        config: { systemInstruction: await this.montarSystemInstruction() },
-      });
+    for (let tentativa = 1; tentativa <= 2; tentativa++) {
+      try {
+        const response = await this.client.models.generateContent({
+          model: this.model,
+          contents,
+          config: { systemInstruction },
+        });
 
-      return response.text?.trim() || RESPOSTA_INDISPONIVEL;
-    } catch (error) {
-      this.logger.error('Falha ao chamar a API do Gemini', error as Error);
-      return RESPOSTA_INDISPONIVEL;
+        return response.text?.trim() || RESPOSTA_INDISPONIVEL;
+      } catch (error) {
+        const status = (error as { status?: number }).status;
+        const podeTentarDeNovo = tentativa === 1 && status === 503;
+
+        if (podeTentarDeNovo) {
+          this.logger.warn('Gemini indisponível (503), tentando novamente...');
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        this.logger.error('Falha ao chamar a API do Gemini', error as Error);
+        return RESPOSTA_INDISPONIVEL;
+      }
     }
+
+    return RESPOSTA_INDISPONIVEL;
   }
 
   private async montarSystemInstruction(): Promise<string> {
