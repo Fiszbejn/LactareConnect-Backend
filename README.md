@@ -4,7 +4,7 @@ Backend da solução **LactareConnect**, desenvolvida como entrega do Challenge 
 
 ## Sobre o projeto
 
-O LactareConnect conecta nutrizes doadoras a bancos de leite humano, cobrindo todo o fluxo de doação: exames pré-doação, agendamento de coleta e registro da doação. A plataforma também conta com um sistema de recompensas em "Gotinhas" (moeda virtual ganha ao doar, trocável por prêmios), suporte via chatbot ("Lila") e um painel administrativo interno (campanhas, relatórios).
+O LactareConnect conecta nutrizes doadoras a bancos de leite humano, cobrindo todo o fluxo de doação: exames pré-doação, agendamento de coleta e registro da doação. A plataforma também conta com um sistema de recompensas em "Gotinhas" (moeda virtual ganha ao doar, trocável por prêmios), suporte via chatbot ("Lila") — disponível tanto dentro do app quanto pelo WhatsApp — e um painel administrativo interno (campanhas, relatórios).
 
 Este repositório contém o backend da solução: uma API REST em NestJS + TypeScript, com persistência em Oracle.
 
@@ -17,6 +17,7 @@ Este repositório contém o backend da solução: uma API REST em NestJS + TypeS
 - Documentação **Swagger/OpenAPI** (`@nestjs/swagger`)
 - Validação de entrada com `class-validator` / `class-transformer`
 - Docker + Docker Compose
+- Chatbot **Lila** com IA generativa ([Google Gemini](https://ai.google.dev/)), reaproveitado no app e no WhatsApp via [Evolution API](https://doc.evolution-api.com/)
 
 ## Pré-requisitos
 
@@ -48,13 +49,24 @@ Não é necessário ter Node.js, npm ou Oracle Instant Client instalados localme
    DB_PASSWORD=sua-senha
    DB_SYNCHRONIZE=true
    DB_LOGGING=false
+
+   GEMINI_API_KEY=sua-chave-do-google-gemini
+
+   EVOLUTION_API_URL=http://evolution-api:8080
+   EVOLUTION_API_KEY=escolha-uma-chave-qualquer
+   EVOLUTION_INSTANCE_NAME=lactareconnect
+   WHATSAPP_WEBHOOK_SECRET=escolha-um-segredo-qualquer
    ```
 
    > **Nota:** com `DB_SYNCHRONIZE=true`, o TypeORM cria automaticamente todas as tabelas necessárias no schema Oracle informado na primeira inicialização da aplicação — **não é preciso rodar nenhuma migration manual**. Todas as tabelas são criadas com o prefixo `LC_` (ex: `LC_nutrizes`, `LC_administradores`), para não colidir com outras tabelas que já existam no mesmo schema.
+   >
+   > **Nota:** `GEMINI_API_KEY` é opcional — sem ela, a Lila responde com uma mensagem padrão em vez de gerar respostas por IA. As variáveis `EVOLUTION_*` e `WHATSAPP_WEBHOOK_SECRET` também são opcionais e só importam se você for testar o chatbot pelo WhatsApp (veja a seção [Chatbot da Lila no WhatsApp](#chatbot-da-lila-no-whatsapp-opcional)).
 
 ## Como rodar com Docker
 
-O `docker-compose.yml` sobe apenas o container da API — **não há container de banco de dados**, já que o Oracle é externo (cloud/servidor à parte). A aplicação se conecta ao Oracle usando as credenciais do `.env`.
+O `docker-compose.yml` sobe o container da API e, junto dela, a **Evolution API** (gateway de WhatsApp usado pela Lila) com seu próprio Postgres e Redis — **não há container de banco de dados para a API principal**, já que o Oracle é externo (cloud/servidor à parte). A aplicação se conecta ao Oracle usando as credenciais do `.env`.
+
+Se você não pretende testar o chatbot pelo WhatsApp agora, pode ignorar os containers `evolution-api`/`evolution-postgres`/`evolution-redis` — eles sobem normalmente, mas ficam ociosos sem nenhuma instância pareada, e o resto da aplicação funciona sem eles.
 
 **Construir a imagem e iniciar o container:**
 
@@ -100,9 +112,24 @@ A API usa login por e-mail/senha com token JWT (`POST /v1/auth/login`), com trê
 - **Rotas de catálogo** (`RegiaoAtendimento`, `Recompensa`, `PerguntaFrequente`): leitura aberta a qualquer usuário autenticado, escrita restrita a administrador.
 - **Rotas de dono do registro** (`Nutriz`, `Endereco`, `PreferenciasUsuario`, `ExamePreDoacao`, `Agendamento`, `Doacao`, `Resgate`, `FeedbackFaq`): uma nutriz só acessa/edita os próprios dados; administrador acessa todos.
 
-O cadastro de uma nova nutriz (`POST /v1/nutrizes`) é a única rota totalmente pública, pois é o ponto de entrada de um novo usuário no sistema.
+O cadastro de uma nova nutriz (`POST /v1/nutrizes`) é a única rota de negócio totalmente pública, pois é o ponto de entrada de um novo usuário no sistema. O webhook `POST /v1/webhooks/whatsapp` também não exige JWT, mas é protegido por um segredo compartilhado (veja a seção seguinte).
 
 > **Administrador inicial:** como cadastrar um administrador exige um token de administrador, não haveria como criar o primeiro administrador pela API em um banco vazio. Por isso, a aplicação garante automaticamente, a cada inicialização, que exista um administrador fixo — se ele ainda não existir, é criado (`email: admin@lactareconnect.com`, `senha: admin123`). Use essa conta para obter o primeiro token administrativo; a partir dela é possível cadastrar os demais administradores normalmente via `POST /v1/administradores`.
+
+## Chatbot da Lila no WhatsApp (opcional)
+
+Além de responder dentro do app (`POST /v1/conversas/:id/mensagens`), a Lila também atende pelo WhatsApp, usando a [Evolution API](https://doc.evolution-api.com/) (gateway open-source que conecta um número de WhatsApp real via QR code, similar ao WhatsApp Web) como ponte entre o WhatsApp e essa mesma lógica de conversa.
+
+Como funciona:
+
+1. `docker compose up` já sobe a Evolution API (com Postgres e Redis próprios).
+2. Cria-se uma instância e pareia-se um número de telefone (via QR code ou código de pareamento) usando a API da Evolution — veja a [documentação oficial](https://doc.evolution-api.com/) para os endpoints de criação de instância e conexão.
+3. Configura-se o webhook da instância pra apontar para `POST /v1/webhooks/whatsapp?secret=<WHATSAPP_WEBHOOK_SECRET>` (evento `MESSAGES_UPSERT`).
+4. Mensagens recebidas nesse número são identificadas pelo telefone da nutriz remetente: se houver cadastro correspondente, a Lila responde reaproveitando o mesmo histórico/lógica de IA do app; sem cadastro, a resposta é um convite para baixar o app.
+
+Cada conversa fica marcada com o `canal` de origem (`app` ou `whatsapp`), mas é a mesma entidade `Conversa`/`Mensagem` nos dois casos.
+
+Essa parte é opcional para rodar o restante da aplicação — sem pairing feito, o backend sobe normalmente e só o webhook fica sem tráfego real.
 
 ## Exemplos de uso
 
