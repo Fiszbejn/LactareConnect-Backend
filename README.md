@@ -225,6 +225,8 @@ Guarde o `id` retornado — ele é usado como `nutrizId` nos exemplos seguintes.
 
 O mesmo padrão vale para as demais entidades que dependem de um `nutrizId`, `regiaoId`, `agendamentoId`, etc.: crie primeiro o registro "pai" (nutriz, banco de leite, agendamento...), pegue o `id` retornado, e use-o no corpo da próxima requisição. Todos os endpoints, seus parâmetros e exemplos de payload também podem ser explorados diretamente pelo Swagger (`/docs`).
 
+Também há uma collection pronta do Postman em [`postman/LactareConnect.postman_collection.json`](postman/LactareConnect.postman_collection.json), com o fluxo acima (e outros) já montado — basta importar no Postman para testar os endpoints sem montar as requisições manualmente.
+
 ## Estruturas de entrada e saída
 
 Todas as rotas usam DTOs próprios tanto para receber dados (`create-*.dto.ts` / `update-*.dto.ts`, com validação via `class-validator`) quanto para devolver respostas (`*-response.dto.ts`). As entidades persistidas (TypeORM) nunca são expostas diretamente na API — os DTOs de resposta selecionam apenas os campos relevantes (nunca dados sensíveis, como hash de senha) e representam relacionamentos como o id do registro relacionado (ex: `nutrizId`), em vez de objetos aninhados.

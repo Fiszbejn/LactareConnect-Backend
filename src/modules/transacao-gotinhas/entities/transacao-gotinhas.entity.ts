@@ -11,7 +11,6 @@ import { Nutriz } from '../../nutriz/entities/nutriz.entity';
 export enum TransacaoTipo {
   DOACAO = 'doacao',
   EXAME = 'exame',
-  INDICACAO = 'indicacao',
   RESGATE = 'resgate',
 }
 
