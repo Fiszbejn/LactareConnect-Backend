@@ -1,0 +1,2172 @@
+{
+	"info": {
+		"name": "LactareConnect Backend",
+		"description": "Colecao de exemplos de requisicoes para todos os 17 modulos da API. Rode as pastas na ordem em que aparecem (Administrador e Nutriz primeiro) para os IDs serem capturados automaticamente nas variaveis da collection.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/v1"
+		},
+		{
+			"key": "administradorId",
+			"value": ""
+		},
+		{
+			"key": "nutrizId",
+			"value": ""
+		},
+		{
+			"key": "bancoId",
+			"value": ""
+		},
+		{
+			"key": "recompensaId",
+			"value": ""
+		},
+		{
+			"key": "perguntaId",
+			"value": ""
+		},
+		{
+			"key": "campanhaId",
+			"value": ""
+		},
+		{
+			"key": "enderecoId",
+			"value": ""
+		},
+		{
+			"key": "exameId",
+			"value": ""
+		},
+		{
+			"key": "agendamentoId",
+			"value": ""
+		},
+		{
+			"key": "doacaoId",
+			"value": ""
+		},
+		{
+			"key": "resgateId",
+			"value": ""
+		},
+		{
+			"key": "feedbackId",
+			"value": ""
+		},
+		{
+			"key": "conversaId",
+			"value": ""
+		},
+		{
+			"key": "mensagemId",
+			"value": ""
+		},
+		{
+			"key": "relatorioId",
+			"value": ""
+		},
+		{
+			"key": "preferenciaId",
+			"value": ""
+		},
+		{
+			"key": "transacaoId",
+			"value": ""
+		},
+		{
+			"key": "accessToken",
+			"value": ""
+		},
+		{
+			"key": "nutrizEmail",
+			"value": ""
+		},
+		{
+			"key": "nutrizSenha",
+			"value": ""
+		}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login Administrador",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"dev@lactareconnect.com\",\n  \"senha\": \"admin123\",\n  \"tipo\": \"administrador\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const json = pm.response.json();",
+									"if (json.accessToken) { pm.collectionVariables.set(\"accessToken\", json.accessToken); }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Login Nutriz",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{nutrizEmail}}\",\n  \"senha\": \"{{nutrizSenha}}\",\n  \"tipo\": \"nutriz\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const json = pm.response.json();",
+									"if (json.accessToken) { pm.collectionVariables.set(\"accessToken\", json.accessToken); }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Administrador",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/administradores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"administradores"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Admin Teste\",\n  \"email\": \"admin-{{$timestamp}}@teste.com\",\n  \"senha\": \"123456\",\n  \"papel\": \"operacional\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('administradorId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/administradores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"administradores"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/administradores/{{administradorId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"administradores",
+								"{{administradorId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/administradores/{{administradorId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"administradores",
+								"{{administradorId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"papel\": \"supervisor\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Remover",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/administradores/{{administradorId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"administradores",
+								"{{administradorId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Nutriz",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/nutrizes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"nutrizes"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Nutriz Teste\",\n  \"cpf\": \"{{$timestamp}}\",\n  \"dataNascimento\": \"1995-05-10\",\n  \"telefone\": \"11999999999\",\n  \"email\": \"nutriz-{{$timestamp}}@teste.com\",\n  \"senha\": \"123456\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('nutrizId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/nutrizes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"nutrizes"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/nutrizes/{{nutrizId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"nutrizes",
+								"{{nutrizId}}"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"if (json.preferencias && json.preferencias.id) {",
+									"  pm.collectionVariables.set('preferenciaId', json.preferencias.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Atualizar",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/nutrizes/{{nutrizId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"nutrizes",
+								"{{nutrizId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Nutriz Editada\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Remover",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/nutrizes/{{nutrizId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"nutrizes",
+								"{{nutrizId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "PreferenciasUsuario",
+			"item": [
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/preferencias-usuario",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"preferencias-usuario"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/preferencias-usuario/{{preferenciaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"preferencias-usuario",
+								"{{preferenciaId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/preferencias-usuario/{{preferenciaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"preferencias-usuario",
+								"{{preferenciaId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tema\": \"escuro\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			],
+			"description": "Não tem rota de criação — nasce automaticamente junto com a Nutriz. Rode \"Nutriz > Buscar por id\" primeiro para capturar o preferenciaId."
+		},
+		{
+			"name": "Endereco",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/enderecos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"enderecos"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cep\": \"01000-000\",\n  \"rua\": \"Rua A\",\n  \"numero\": \"10\",\n  \"bairro\": \"Centro\",\n  \"cidade\": \"Sao Paulo\",\n  \"uf\": \"SP\",\n  \"nutrizId\": {{nutrizId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('enderecoId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/enderecos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"enderecos"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/enderecos/{{enderecoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"enderecos",
+								"{{enderecoId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/enderecos/{{enderecoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"enderecos",
+								"{{enderecoId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"numero\": \"20\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Remover",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/enderecos/{{enderecoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"enderecos",
+								"{{enderecoId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "BancoLeiteLactare",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/bancos-leite",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bancos-leite"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Banco Teste\",\n  \"enderecoTexto\": \"Rua Teste, 100\",\n  \"areaAtendimento\": \"Zona Sul\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('bancoId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/bancos-leite",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bancos-leite"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/bancos-leite/{{bancoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bancos-leite",
+								"{{bancoId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/bancos-leite/{{bancoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bancos-leite",
+								"{{bancoId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Banco Editado\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Remover",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/bancos-leite/{{bancoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bancos-leite",
+								"{{bancoId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "ExamePreDoacao",
+			"item": [
+				{
+					"name": "Criar - Hemograma",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/exames-pre-doacao",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"exames-pre-doacao"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tipoExame\": \"hemograma\",\n  \"status\": \"ok\",\n  \"nutrizId\": {{nutrizId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('exameId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Criar - Sorologia HIV",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/exames-pre-doacao",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"exames-pre-doacao"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tipoExame\": \"sorologia_hiv\",\n  \"status\": \"ok\",\n  \"nutrizId\": {{nutrizId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('exameId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Criar - VDRL",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/exames-pre-doacao",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"exames-pre-doacao"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tipoExame\": \"vdrl\",\n  \"status\": \"ok\",\n  \"nutrizId\": {{nutrizId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('exameId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Criar - Sorologia Hepatites B e C",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/exames-pre-doacao",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"exames-pre-doacao"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tipoExame\": \"sorologia_hepatites_b_c\",\n  \"status\": \"ok\",\n  \"nutrizId\": {{nutrizId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('exameId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/exames-pre-doacao",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"exames-pre-doacao"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/exames-pre-doacao/{{exameId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"exames-pre-doacao",
+								"{{exameId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/exames-pre-doacao/{{exameId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"exames-pre-doacao",
+								"{{exameId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"ok\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			],
+			"description": "O Agendamento só é liberado depois que a nutriz tiver os 4 exames abaixo com status \"ok\". Rode os 4 \"Criar\" antes de tentar criar um Agendamento."
+		},
+		{
+			"name": "Agendamento",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/agendamentos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"agendamentos"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"dataColeta\": \"2026-08-01\",\n  \"horario\": \"10:00\",\n  \"nutrizId\": {{nutrizId}},\n  \"bancoId\": {{bancoId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('agendamentoId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/agendamentos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"agendamentos"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/agendamentos/{{agendamentoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"agendamentos",
+								"{{agendamentoId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Marcar como Realizado",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/agendamentos/{{agendamentoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"agendamentos",
+								"{{agendamentoId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"realizado\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			],
+			"description": "Criar exige que a nutriz já tenha os 4 exames obrigatórios com status \"ok\" (ver pasta ExamePreDoacao). Depois de criado, use \"Marcar como Realizado\" antes de registrar a Doação."
+		},
+		{
+			"name": "Doacao",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/doacoes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"doacoes"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"volumeMl\": 200,\n  \"dataColeta\": \"2026-08-01T10:00:00.000Z\",\n  \"nutrizId\": {{nutrizId}},\n  \"agendamentoId\": {{agendamentoId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('doacaoId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/doacoes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"doacoes"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/doacoes/{{doacaoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"doacoes",
+								"{{doacaoId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/doacoes/{{doacaoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"doacoes",
+								"{{doacaoId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"volumeMl\": 250\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			],
+			"description": "Exige um Agendamento com status \"realizado\" pertencente à mesma nutriz. Ao criar, credita +100 em nutriz.saldoGotinhas automaticamente."
+		},
+		{
+			"name": "Recompensa",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/recompensas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"recompensas"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Recompensa Teste\",\n  \"parceiro\": \"Parceiro X\",\n  \"categoria\": \"beleza\",\n  \"custoGotinhas\": 100\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('recompensaId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/recompensas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"recompensas"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/recompensas/{{recompensaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"recompensas",
+								"{{recompensaId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/recompensas/{{recompensaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"recompensas",
+								"{{recompensaId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"estoque\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Remover",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/recompensas/{{recompensaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"recompensas",
+								"{{recompensaId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Resgate",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/resgates",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"resgates"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nutrizId\": {{nutrizId}},\n  \"recompensaId\": {{recompensaId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('resgateId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/resgates",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"resgates"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/resgates/{{resgateId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"resgates",
+								"{{resgateId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/resgates/{{resgateId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"resgates",
+								"{{resgateId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"enviado\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			],
+			"description": "Bloqueado se a nutriz não tiver saldoGotinhas suficiente para o custoGotinhas da recompensa, ou se a recompensa estiver com estoque zerado."
+		},
+		{
+			"name": "TransacaoGotinhas",
+			"item": [
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/transacoes-gotinhas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transacoes-gotinhas"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/transacoes-gotinhas/{{transacaoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transacoes-gotinhas",
+								"{{transacaoId}}"
+							]
+						}
+					}
+				}
+			],
+			"description": "Extrato somente leitura (auditoria) — os lançamentos são criados automaticamente por Doacao/Resgate. O saldo \"oficial\" fica em nutriz.saldoGotinhas (ver pasta Nutriz)."
+		},
+		{
+			"name": "PerguntaFrequente",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/perguntas-frequentes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"perguntas-frequentes"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"categoria\": \"doacao\",\n  \"pergunta\": \"Como doar?\",\n  \"resposta\": \"Agende uma coleta.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('perguntaId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/perguntas-frequentes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"perguntas-frequentes"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/perguntas-frequentes/{{perguntaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"perguntas-frequentes",
+								"{{perguntaId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/perguntas-frequentes/{{perguntaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"perguntas-frequentes",
+								"{{perguntaId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ordem\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Remover",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/perguntas-frequentes/{{perguntaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"perguntas-frequentes",
+								"{{perguntaId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "FeedbackFaq",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/feedbacks-faq",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"feedbacks-faq"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"util\": true,\n  \"perguntaId\": {{perguntaId}},\n  \"nutrizId\": {{nutrizId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('feedbackId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/feedbacks-faq",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"feedbacks-faq"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/feedbacks-faq/{{feedbackId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"feedbacks-faq",
+								"{{feedbackId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Conversa (Lila)",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/conversas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"conversas"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nutrizId\": {{nutrizId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('conversaId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"conversas"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversas/{{conversaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"conversas",
+								"{{conversaId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Mensagem (Lila)",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/mensagens",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mensagens"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"remetente\": \"usuario\",\n  \"texto\": \"Ola Lila, como funciona a doacao?\",\n  \"conversaId\": {{conversaId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('mensagemId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/mensagens",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mensagens"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/mensagens/{{mensagemId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mensagens",
+								"{{mensagemId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Listar por Conversa",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/mensagens/conversa/{{conversaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"mensagens",
+								"conversa",
+								"{{conversaId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Campanha",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/campanhas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campanhas"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Campanha Teste\",\n  \"canal\": \"email\",\n  \"dataEnvio\": \"2026-07-26T12:00:00.000Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('campanhaId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/campanhas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campanhas"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/campanhas/{{campanhaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campanhas",
+								"{{campanhaId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/campanhas/{{campanhaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campanhas",
+								"{{campanhaId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"enviados\": 500\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Remover",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/campanhas/{{campanhaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"campanhas",
+								"{{campanhaId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "RelatorioGerado",
+			"item": [
+				{
+					"name": "Criar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios-gerados",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios-gerados"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"periodoInicio\": \"2026-07-01\",\n  \"periodoFim\": \"2026-07-26\",\n  \"secoesIncluidas\": \"doacoes,resgates\",\n  \"formato\": \"pdf_resumo\",\n  \"administradorId\": {{administradorId}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('relatorioId', json.id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar todos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios-gerados",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios-gerados"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar por id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios-gerados/{{relatorioId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios-gerados",
+								"{{relatorioId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Remover",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios-gerados/{{relatorioId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios-gerados",
+								"{{relatorioId}}"
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	}
+}
