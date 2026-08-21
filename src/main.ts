@@ -33,6 +33,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  await app.listen(process.env.APP_PORT ?? 3000);
+  // PORT: injetada automaticamente por plataformas de hospedagem (ex: Render).
+  // APP_PORT: nossa própria variável, usada localmente/Docker Compose.
+  await app.listen(process.env.PORT ?? process.env.APP_PORT ?? 3000);
 }
 bootstrap();
