@@ -17,7 +17,7 @@ Este repositório contém o backend da solução: uma API REST em NestJS + TypeS
 - Documentação **Swagger/OpenAPI** (`@nestjs/swagger`)
 - Validação de entrada com `class-validator` / `class-transformer`
 - Docker + Docker Compose
-- Chatbot **Lila** com IA generativa ([Google Gemini](https://ai.google.dev/)), reaproveitado no app e no WhatsApp via [Evolution API](https://doc.evolution-api.com/)
+- Chatbot **Lila** com IA generativa ([Groq](https://groq.com/)), reaproveitado no app e no WhatsApp via [Evolution API](https://doc.evolution-api.com/)
 
 ## Pré-requisitos
 
@@ -50,7 +50,7 @@ Não é necessário ter Node.js, npm ou Oracle Instant Client instalados localme
    DB_SYNCHRONIZE=true
    DB_LOGGING=false
 
-   GEMINI_API_KEY=sua-chave-do-google-gemini
+   GROQ_API_KEY=sua-chave-da-groq
 
    EVOLUTION_API_URL=http://evolution-api:8080
    EVOLUTION_API_KEY=escolha-uma-chave-qualquer
