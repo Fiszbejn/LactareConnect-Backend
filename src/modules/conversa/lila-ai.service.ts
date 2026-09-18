@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { GoogleGenAI } from '@google/genai';
+import Groq from 'groq-sdk';
 import { PerguntaFrequente } from '../pergunta-frequente/entities/pergunta-frequente.entity';
 import {
   Mensagem,
@@ -15,20 +15,20 @@ const RESPOSTA_INDISPONIVEL =
 @Injectable()
 export class LilaAiService {
   private readonly logger = new Logger(LilaAiService.name);
-  private readonly client: GoogleGenAI | null;
+  private readonly client: Groq | null;
   private readonly model: string;
 
   constructor(
     private readonly configService: ConfigService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {
-    const apiKey = this.configService.get<string>('gemini.apiKey');
-    this.model = this.configService.get<string>('gemini.model')!;
-    this.client = apiKey ? new GoogleGenAI({ apiKey }) : null;
+    const apiKey = this.configService.get<string>('groq.apiKey');
+    this.model = this.configService.get<string>('groq.model')!;
+    this.client = apiKey ? new Groq({ apiKey }) : null;
 
     if (!this.client) {
       this.logger.warn(
-        'GEMINI_API_KEY não configurada; a Lila vai responder com uma mensagem padrão.',
+        'GROQ_API_KEY não configurada; a Lila vai responder com uma mensagem padrão.',
       );
     }
   }
@@ -41,36 +41,42 @@ export class LilaAiService {
       return RESPOSTA_INDISPONIVEL;
     }
 
-    const contents = [
-      ...historico.map((mensagem) => ({
-        role:
-          mensagem.remetente === MensagemRemetente.USUARIO ? 'user' : 'model',
-        parts: [{ text: mensagem.texto }],
-      })),
-      { role: 'user', parts: [{ text: perguntaAtual }] },
-    ];
     const systemInstruction = await this.montarSystemInstruction();
+    const messages: Groq.Chat.Completions.ChatCompletionMessageParam[] = [
+      { role: 'system', content: systemInstruction },
+      ...historico.map(
+        (mensagem): Groq.Chat.Completions.ChatCompletionMessageParam => ({
+          role:
+            mensagem.remetente === MensagemRemetente.USUARIO
+              ? 'user'
+              : 'assistant',
+          content: mensagem.texto,
+        }),
+      ),
+      { role: 'user', content: perguntaAtual },
+    ];
 
     for (let tentativa = 1; tentativa <= 2; tentativa++) {
       try {
-        const response = await this.client.models.generateContent({
+        const response = await this.client.chat.completions.create({
           model: this.model,
-          contents,
-          config: { systemInstruction },
+          messages,
         });
 
-        return response.text?.trim() || RESPOSTA_INDISPONIVEL;
+        return (
+          response.choices[0]?.message.content?.trim() || RESPOSTA_INDISPONIVEL
+        );
       } catch (error) {
         const status = (error as { status?: number }).status;
         const podeTentarDeNovo = tentativa === 1 && status === 503;
 
         if (podeTentarDeNovo) {
-          this.logger.warn('Gemini indisponível (503), tentando novamente...');
+          this.logger.warn('Groq indisponível (503), tentando novamente...');
           await new Promise((resolve) => setTimeout(resolve, 1000));
           continue;
         }
 
-        this.logger.error('Falha ao chamar a API do Gemini', error as Error);
+        this.logger.error('Falha ao chamar a API da Groq', error as Error);
         return RESPOSTA_INDISPONIVEL;
       }
     }
@@ -95,6 +101,8 @@ export class LilaAiService {
       'Responda de forma breve e clara, focada em dúvidas sobre doação de leite humano, agendamentos em bancos de leite, recompensas (gotinhas) e uso do app.',
       'Se a pergunta fugir totalmente desse escopo, redirecione com gentileza para os temas do app, sem soar rude.',
       'Quando fizer sentido pela conversa, incentive a pessoa a abrir o app do LactareConnect para agendar uma coleta, conferir o saldo de Gotinhas ou ver campanhas ativas — de forma natural, sem repetir isso em toda resposta nem soar como propaganda.',
+      'Nunca invente informações de contato (telefone, e-mail, endereço) que não estejam nas perguntas frequentes abaixo ou no restante desta instrução.',
+      'Responda em texto simples, sem markdown (sem **negrito**, listas numeradas, tabelas ou títulos) e sem emojis em excesso.',
       'Use as perguntas frequentes abaixo como base de conhecimento sempre que forem relevantes para a pergunta da pessoa:',
       faq,
     ].join('\n\n');

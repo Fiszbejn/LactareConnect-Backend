@@ -75,7 +75,7 @@ export class ConversaService {
 
   /**
    * Envia a mensagem da nutriz e já devolve a resposta da Lila na mesma
-   * chamada, gerada em tempo real pelo Gemini com base no histórico da
+   * chamada, gerada em tempo real pela Groq com base no histórico da
    * conversa e nas perguntas frequentes cadastradas.
    */
   async enviarMensagem(
